@@ -67,7 +67,7 @@ rdd = spark.sparkContext.parallelize(generate_data())
 grouped = rdd.groupByKey()
 
 # Run the Graph
-for key, count in counts.take(10):
+for key, count in grouped.take(10):
     print(f"{key}: {count}")
 
 spark.stop()
