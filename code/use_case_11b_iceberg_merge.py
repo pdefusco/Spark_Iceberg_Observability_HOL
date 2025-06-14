@@ -40,15 +40,17 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, rand, expr
 import datetime
+import sys
+
+print("Write Tables:")
+writeIcebergTableOne = sys.argv[1]
+writeIcebergTableTwo = sys.argv[2]
+print(writeIcebergTableOne)
+print(writeIcebergTableTwo)
 
 # Set up Spark with Iceberg
 spark = SparkSession.builder \
     .appName("IcebergUpsertExample") \
-    .config("spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkSessionCatalog") \
-    .config("spark.sql.catalog.spark_catalog.type", "hive") \
-    .config("spark.sql.catalog.spark_catalog.warehouse", "/tmp/iceberg_warehouse") \
-    .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \
-    .enableHiveSupport() \
     .getOrCreate()
 
 # Parameters
@@ -71,22 +73,22 @@ df2 = spark.range(NUM_ROWS // 2, NUM_ROWS + NUM_ROWS // 2).toDF("id") \
 
 # Write target table (Iceberg)
 spark.sql("DROP TABLE IF EXISTS spark_catalog.default.target_table")
-df1.writeTo("spark_catalog.default.target_table").using("iceberg").create()
+df1.writeTo(writeIcebergTableOne).using("iceberg").create()
 
 # Write source table (Iceberg)
 spark.sql("DROP TABLE IF EXISTS spark_catalog.default.source_table")
-df2.writeTo("spark_catalog.default.source_table").using("iceberg").create()
+df2.writeTo(writeIcebergTableTwo).using("iceberg").create()
 
 # Perform UPSERT using Iceberg MERGE INTO
 spark.sql("""
-    MERGE INTO spark_catalog.default.target_table AS target
-    USING spark_catalog.default.source_table AS source
+    MERGE INTO {0} AS target
+    USING {1} AS source
     ON target.id = source.id
     WHEN MATCHED AND source.event_time > target.event_time THEN
       UPDATE SET *
     WHEN NOT MATCHED THEN
       INSERT *
-""")
+""".format(writeIcebergTableOne, writeIcebergTableTwo))
 
 print("Iceberg UPSERT completed using MERGE INTO")
 

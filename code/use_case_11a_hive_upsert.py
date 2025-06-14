@@ -41,19 +41,24 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, rand, expr, lit
 import random
 import datetime
+import sys
+
+print("Write Tables:")
+writeHiveTableOne = sys.argv[1]
+writeHiveTableTwo = sys.argv[2]
+print(writeHiveTableOne)
+print(writeHiveTableTwo)
 
 # Initialize SparkSession with Hive support
 spark = SparkSession.builder \
-    .appName("UpsertWithoutIceberg") \
-    .config("spark.sql.shuffle.partitions", "200") \
     .enableHiveSupport() \
     .getOrCreate()
+
+#    .appName("UpsertWithoutIceberg") \
 
 # Settings
 NUM_ROWS = 5_000_000
 CATEGORIES = ['A', 'B', 'C', 'D', 'E']
-TABLE_PATH_1 = "/tmp/hive_tables/target_table"
-TABLE_PATH_2 = "/tmp/hive_tables/source_table"
 
 # Helper: Generate random base timestamp
 base_ts = datetime.datetime(2020, 1, 1)
@@ -74,15 +79,13 @@ df2 = spark.range(NUM_ROWS // 2, NUM_ROWS + NUM_ROWS // 2).toDF("id") \
 
 # Save Dataset 1 to Hive external table
 df1.write.mode("overwrite") \
-    .option("path", TABLE_PATH_1) \
     .format("parquet") \
-    .saveAsTable("default.target_table")
+    .saveAsTable(writeHiveTableOne)
 
 # Save Dataset 2 to Hive external table
 df2.write.mode("overwrite") \
-    .option("path", TABLE_PATH_2) \
     .format("parquet") \
-    .saveAsTable("default.source_table")
+    .saveAsTable(writeHiveTableTwo)
 
 # Perform UPSERT (merge latest per ID based on event_time)
 # Using Spark SQL for simplicity
@@ -92,21 +95,20 @@ spark.sql("""
     FROM (
         SELECT *, ROW_NUMBER() OVER (PARTITION BY id ORDER BY event_time DESC) as rn
         FROM (
-            SELECT * FROM default.target_table
+            SELECT * FROM {0}
             UNION ALL
-            SELECT * FROM default.source_table
+            SELECT * FROM {1}
         ) all_data
     ) ranked
     WHERE rn = 1
-""")
+""".format(writeHiveTableOne, writeHiveTableTwo))
 
 # Overwrite the target table with upserted result
 spark.table("merged_upsert") \
     .drop("rn") \
     .write.mode("overwrite") \
-    .option("path", TABLE_PATH_1) \
     .format("parquet") \
-    .saveAsTable("default.target_table")
+    .saveAsTable(writeHiveTableOne)
 
 print("Upsert operation completed without Iceberg.")
 

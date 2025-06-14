@@ -40,15 +40,15 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, expr, rand
 import datetime
+import sys
+
+print("Write Tables:")
+writeIcebergTableOne = sys.argv[1]
+print(writeIcebergTableOne)
 
 # Initialize Spark with Iceberg and Hive catalog
 spark = SparkSession.builder \
     .appName("IcebergPartitionEvolutionExample") \
-    .config("spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkSessionCatalog") \
-    .config("spark.sql.catalog.spark_catalog.type", "hive") \
-    .config("spark.sql.catalog.spark_catalog.warehouse", "/tmp/iceberg_warehouse") \
-    .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \
-    .enableHiveSupport() \
     .getOrCreate()
 
 # Parameters
@@ -65,9 +65,9 @@ df_month = spark.range(0, NUM_ROWS).toDF("id") \
     .withColumn("day", expr("date_format(event_ts, 'yyyy-MM-dd')"))
 
 # Step 2: Create Iceberg table partitioned by month
-spark.sql("DROP TABLE IF EXISTS spark_catalog.default.partitioned_data")
+spark.sql("DROP TABLE IF EXISTS {}".format(writeIcebergTableOne))
 
-df_month.writeTo("spark_catalog.default.partitioned_data") \
+df_month.writeTo(writeIcebergTableOne) \
     .using("iceberg") \
     .partitionedBy("month") \
     .create()
@@ -75,13 +75,13 @@ df_month.writeTo("spark_catalog.default.partitioned_data") \
 # Step 3: Evolve the partition spec to include day instead of month
 # Use Iceberg SQL to alter the table
 spark.sql("""
-    ALTER TABLE spark_catalog.default.partitioned_data
+    ALTER TABLE {}
     DROP PARTITION FIELD month
-""")
+""".format(writeIcebergTableOne))
 spark.sql("""
-    ALTER TABLE spark_catalog.default.partitioned_data
+    ALTER TABLE {}
     ADD PARTITION FIELD days(event_ts)
-""")
+""".format(writeIcebergTableOne))
 
 # Step 4: Generate new data for appending using the new partition scheme
 df_day = spark.range(NUM_ROWS, NUM_ROWS * 2).toDF("id") \
@@ -91,12 +91,12 @@ df_day = spark.range(NUM_ROWS, NUM_ROWS * 2).toDF("id") \
     .withColumn("event_ts", expr(f"timestamp('{BASE_DATE}') + interval int(id % 90) days"))
 
 # Append new records (now partitioned by day)
-df_day.writeTo("spark_catalog.default.partitioned_data") \
+df_day.writeTo(writeIcebergTableOne) \
     .using("iceberg") \
     .append()
 
 # Step 5: Read and show data from the evolved table
-df_all = spark.table("spark_catalog.default.partitioned_data")
+df_all = spark.table(writeIcebergTableOne)
 df_all.show(10, truncate=False)
 
 spark.stop()

@@ -39,11 +39,15 @@
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, rand, when, expr, sum, count
+import sys
+
+print("Write Storage Location:")
+writeLocation = sys.argv[1]
+print(writeLocation)
 
 # Create SparkSession
 spark = SparkSession.builder \
     .appName("SyntheticWideTransformations") \
-    .config("spark.sql.shuffle.partitions", "10000") \
     .getOrCreate()
 
 # Generate synthetic fact data (large dataset)
@@ -83,6 +87,6 @@ final_df = joined_with_region.groupBy("region", "customer_type").agg(
 final_df = final_df.repartition(200)
 
 # Trigger execution
-final_df.write.mode("overwrite").parquet("/tmp/synthetic_bad_output")
+final_df.write.mode("overwrite").parquet(writeLocation)
 
 spark.stop()

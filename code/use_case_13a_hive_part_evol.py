@@ -40,6 +40,11 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import expr, rand
 import datetime
+import sys
+
+print("Write Tables:")
+writeHiveTableOne = sys.argv[1]
+print(writeHiveTableOne)
 
 # Initialize Spark with Hive support
 spark = SparkSession.builder \
@@ -51,8 +56,7 @@ spark = SparkSession.builder \
 # Parameters
 NUM_ROWS = 500_000
 BASE_DATE = datetime.datetime(2023, 1, 1)
-TABLE_PATH = "/tmp/hive_partition_append_by_month"
-TABLE_NAME = "default.hive_month_partitioned_table"
+#TABLE_PATH = "/tmp/hive_partition_append_by_month"
 
 # Step 1: Generate initial dataset
 df_initial = spark.range(0, NUM_ROWS).toDF("id") \
@@ -68,8 +72,10 @@ df_initial.write \
     .mode("overwrite") \
     .format("parquet") \
     .partitionBy("month") \
-    .option("path", TABLE_PATH) \
-    .saveAsTable(TABLE_NAME)
+    .saveAsTable(writeHiveTableOne)
+
+#    .option("path", TABLE_PATH) \
+
 
 # Step 3: Generate new batch of data (later range of IDs, same schema)
 df_new_batch = spark.range(NUM_ROWS, NUM_ROWS * 2).toDF("id") \
@@ -84,10 +90,11 @@ df_new_batch.write \
     .mode("append") \
     .format("parquet") \
     .partitionBy("month") \
-    .option("path", TABLE_PATH) \
-    .saveAsTable(TABLE_NAME)
+    .saveAsTable(writeHiveTableOne)
+
+#    .option("path", TABLE_PATH) \
 
 # Step 5: Show the combined data
-spark.table(TABLE_NAME).show(10, truncate=False)
+spark.table(writeHiveTableOne).show(10, truncate=False)
 
 spark.stop()

@@ -39,11 +39,15 @@
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, rand, when
+import sys
+
+print("Write Table:")
+writeHiveTable = sys.argv[1]
+print(writeHiveTable)
 
 # Initialize SparkSession
 spark = SparkSession.builder \
     .appName("BadBucketingApp") \
-    .config("spark.sql.sources.bucketing.enabled", "true") \
     .getOrCreate()
 
 # Synthetic data (relatively small but spread over many buckets)
@@ -85,7 +89,7 @@ df.write \
     .sortBy("user_id") \
     .mode("overwrite") \
     .format("parquet") \
-    .saveAsTable("bucketed_small_files")
+    .saveAsTable(writeHiveTable)
 
 # Show table files location (optional)
 print("Wrote to Hive-compatible bucketed table: bucketed_small_files")

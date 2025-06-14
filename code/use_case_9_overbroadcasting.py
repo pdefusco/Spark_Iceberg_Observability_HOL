@@ -40,6 +40,11 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, rand
 from pyspark.sql.functions import broadcast
+import sys
+
+print("Write Storage Location:")
+writeLocation = sys.argv[1]
+print(writeLocation)
 
 # Initialize SparkSession
 spark = SparkSession.builder \
@@ -61,6 +66,6 @@ dim_df = spark.range(0, 10_000_000).toDF("user_id") \
 joined_df = fact_df.join(broadcast(dim_df), on="user_id", how="inner")
 
 # Trigger the join and output (will likely fail due to OOM)
-joined_df.write.mode("overwrite").parquet("/tmp/unsafe_broadcast_join_output")
+joined_df.write.mode("overwrite").parquet(writeLocation)
 
 spark.stop()

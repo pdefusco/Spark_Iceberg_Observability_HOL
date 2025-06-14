@@ -39,11 +39,15 @@
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, rand
+import sys
+
+print("Write Storage Location:")
+writeLocation = sys.argv[1]
+print(writeLocation)
 
 # Create Spark session
 spark = SparkSession.builder \
     .appName("BadPartitioningOOM") \
-    .config("spark.sql.shuffle.partitions", "200") \
     .getOrCreate()
 
 # Create synthetic large dataset (100 million rows)
@@ -64,6 +68,6 @@ agg_df = df.groupBy("user_id").sum("amount")
 agg_df = agg_df.repartition(100_000, "user_id")
 
 # Step 4: Trigger execution by writing to disk
-agg_df.write.mode("overwrite").parquet("/tmp/bad_partitioning_output")
+agg_df.write.mode("overwrite").parquet(writeLocation)
 
 spark.stop()

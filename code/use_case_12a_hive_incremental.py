@@ -39,6 +39,17 @@
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
+import sys
+
+print("Write Tables:")
+writeHiveTableOne = sys.argv[1]
+writeHiveTableTwo = sys.argv[2]
+print(writeHiveTableOne)
+print(writeHiveTableTwo)
+
+print("Write Storage Location:")
+writeLocation = sys.argv[1]
+print(writeLocation)
 
 # Initialize Spark session (Hive aware)
 spark = SparkSession.builder \
@@ -47,8 +58,8 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 # Load target and source tables (already created and upserted)
-target_df = spark.table("default.target_table")
-source_df = spark.table("default.source_table")
+target_df = spark.table(writeHiveTableOne)
+source_df = spark.table(writeHiveTableTwo)
 
 # Join on ID to compare records
 joined_df = target_df.alias("target").join(
@@ -68,7 +79,7 @@ changed_rows = joined_df.filter(
 # Write changed rows to S3 in Parquet format
 changed_rows.write \
     .mode("overwrite") \
-    .parquet("s3a://your-bucket-name/changed_records_from_upsert/")
+    .parquet(writeLocation)
 
 print("Changed records written to S3.")
 

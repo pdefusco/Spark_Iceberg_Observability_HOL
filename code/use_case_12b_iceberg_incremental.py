@@ -39,19 +39,22 @@
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
+import sys
+
+print("Write Storage Location:")
+writeLocation = sys.argv[1]
+print(writeLocation)
+
+print("Write Tables:")
+writeIcebergTableOne = sys.argv[2]
+print(writeIcebergTableOne)
 
 # Initialize Spark session with Iceberg
 spark = SparkSession.builder \
-    .appName("IcebergIncrementalReadCorrect") \
-    .config("spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkSessionCatalog") \
-    .config("spark.sql.catalog.spark_catalog.type", "hive") \
-    .config("spark.sql.catalog.spark_catalog.warehouse", "/tmp/iceberg_warehouse") \
-    .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \
-    .enableHiveSupport() \
     .getOrCreate()
 
 # Step 1: Get the snapshot history of the table
-history_df = spark.sql("SELECT * FROM spark_catalog.default.target_table.history ORDER BY timestamp")
+history_df = spark.sql("SELECT * FROM {}.history ORDER BY timestamp".format(writeIcebergTableOne))
 
 # Step 2: Extract start and end snapshot IDs (assuming last two snapshots)
 snapshots = history_df.orderBy(col("timestamp")).collect()
@@ -67,12 +70,12 @@ incremental_df = spark.read \
     .format("iceberg") \
     .option("start-snapshot-id", start_snapshot_id) \
     .option("end-snapshot-id", end_snapshot_id) \
-    .load("spark_catalog.default.target_table")
+    .load(writeIcebergTableOne)
 
 # Step 4: Write only the changed rows to S3
 incremental_df.write \
     .mode("overwrite") \
-    .parquet("s3a://your-bucket-name/incremental_changes/")
+    .parquet(writeLocation)
 
 print(f"Incremental changes from snapshot {start_snapshot_id} to {end_snapshot_id} written to S3.")
 
