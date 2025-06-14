@@ -261,14 +261,14 @@ cde spark submit code/use_case_10_improper_repartitoning.py \
 
 ```
 cde resource upload --name spark_observability_hol \
-  --local-path code/use_case_10_improper_repartitoning.py
+  --local-path code/use_case_10_improper_repartitioning.py
 
-cde job create --name use_case_10_improper_repartitoning \
+cde job create --name use_case_10_improper_repartitioning \
   --type spark \
-  --application-file use_case_10_improper_repartitoning.py \
+  --application-file use_case_10_improper_repartitioning.py \
   --mount-1-resource spark_observability_hol
 
-cde job run --name use_case_10_improper_repartitoning \
+cde job run --name use_case_10_improper_repartitioning \
   --conf spark.sql.autoBroadcastJoinThreshold=-1 \
   --executor-cores 4 \
   --executor-memory "4g" \
