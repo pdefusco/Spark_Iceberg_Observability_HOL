@@ -109,7 +109,7 @@ cde job run --name use_case_4_underallocating \
 A Spark job with Dynamic Allocation where max and min executors are set wide, each executor having just one or two cores, and minimum memory, are set, leading to too many small tasks.
 
 ```
-cde spark submit code/use_case_5_unordered_shuffles.py \
+cde spark submit code/use_case_5_bad_da.py \
   --conf spark.sql.shuffle.partitions=10000 \
   --conf spark.dynamicAllocation.minExecutors=1 \
   --conf spark.dynamicAllocation.maxExecutors=50 \
@@ -118,17 +118,16 @@ cde spark submit code/use_case_5_unordered_shuffles.py \
   --arg s3a://rapids-demo-buk-bb66b705/data/bad_dynamic_allocation
 ```
 
-
 ```
 cde resource upload --name spark_observability_hol \
-  --local-path code/use_case_5_unordered_shuffles.py
+  --local-path code/use_case_5_bad_da.py
 
 cde job create --name use_case_5_unordered_shuffles \
   --type spark \
-  --application-file use_case_5_unordered_shuffles.py \
+  --application-file use_case_5_bad_da.py \
   --mount-1-resource spark_observability_hol
 
-cde job run --name use_case_5_unordered_shuffles \
+cde job run --name use_case_5_bad_da \
   --conf spark.sql.shuffle.partitions=10000 \
   --conf spark.dynamicAllocation.minExecutors=1 \
   --conf spark.dynamicAllocation.maxExecutors=50 \
