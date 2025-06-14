@@ -46,8 +46,11 @@ A Spark job with Dynamic Allocation where max and min executors are set wide, ea
 ```
 cde spark submit code/use_case_5_unordered_shuffles.py \
   --conf spark.sql.shuffle.partitions=10000 \
-  --executor-cores 4 \
-  --executor-memory "4g"
+  --conf spark.dynamicAllocation.minExecutors=1 \
+  --conf spark.dynamicAllocation.maxExecutors=50 \
+  --executor-cores 1 \
+  --executor-memory "1g" \
+  --arg s3a://rapids-demo-buk-bb66b705/data/bad_dynamic_allocation
 ```
 
 ### Use Case 6: Misconfigured Resources - High Shuffle Partitions
@@ -58,7 +61,8 @@ A Spark job where shuffle partitions property is set too high or too low.
 cde spark submit code/use_case_6_high_sp.py \
   --conf spark.sql.shuffle.partitions=10000 \
   --executor-cores 4 \
-  --executor-memory "4g"
+  --executor-memory "4g" \
+  --arg s3a://rapids-demo-buk-bb66b705/data/high_shuffle_partitions
 ```
 
 ### Use Case 7: Over Bucketing
@@ -68,7 +72,8 @@ A Spark Application written in Spark 2 that has been migrated to Spark 3 is crea
 ```
 cde spark submit code/use_case_7_over_bucketing.py \
   --executor-cores 4 \
-  --executor-memory "4g"
+  --executor-memory "4g" \
+  --arg default.overbucketing
 ```
 
 ### Use Case 8: Unordered Shuffles
@@ -79,7 +84,8 @@ A Spark Application written in Spark 2 that has been migrated to Spark 3 is crea
 cde spark submit code/use_case_8_unordered_shuffles.py \
   --conf spark.sql.shuffle.partitions=10000 \
   --executor-cores 4 \
-  --executor-memory "4g"
+  --executor-memory "4g" \
+  --arg s3a://rapids-demo-buk-bb66b705/data/unordered_shuffles
 ```
 
 ### Use Case 9: Overbroadcasting
@@ -90,7 +96,8 @@ A Spark Application written in Spark 2 that has been migrated to Spark 3 is crea
 cde spark submit code/use_case_9_overbroadcasting.py \
   --conf spark.sql.autoBroadcastJoinThreshold=-1 \
   --executor-cores 4 \
-  --executor-memory "4g"
+  --executor-memory "4g" \
+  --arg s3a://rapids-demo-buk-bb66b705/data/overbroadcasting
 ```
 
 ### Use Case 10: Improper Repartitioning
@@ -101,7 +108,8 @@ A Spark Application written in Spark 2 that has been migrated to Spark 3 is crea
 cde spark submit code/use_case_10_improper_repartitoning.py \
   --conf spark.sql.shuffle.partitions=200 \
   --executor-cores 4 \
-  --executor-memory "4g"
+  --executor-memory "4g" \
+  --arg s3a://rapids-demo-buk-bb66b705/data/improper_repartitioning
 ```
 
 ### Use Case 11a: Hive Upsert
@@ -111,7 +119,9 @@ A Spark Application written in Spark 2 that has been migrated to Spark 3 is crea
 ```
 cde spark submit code/use_case_11a_hive_upsert.py \
   --executor-cores 4 \
-  --executor-memory "4g"
+  --executor-memory "4g" \
+  --arg default.hive_upsert_target_table \
+  --arg default.hive_upsert_source_table
 ```
 
 ### Use Case 11b: Iceberg Merge
@@ -121,7 +131,9 @@ A Spark Application written in Spark 2 that has been migrated to Spark 3 is crea
 ```
 cde spark submit code/use_case_11b_iceberg_merge.py \
   --executor-cores 4 \
-  --executor-memory "4g"
+  --executor-memory "4g" \
+  --arg spark_catalog.default.iceberg_merge_target_table \
+  --arg spark_catalog.default.iceberg_merge_source_table
 ```
 
 ### Use Case 12a: Hive Incremental
@@ -131,7 +143,10 @@ A Spark Application written in Spark 2 that has been migrated to Spark 3 is crea
 ```
 cde spark submit code/use_case_12a_hive_incremental.py \
   --executor-cores 4 \
-  --executor-memory "4g"
+  --executor-memory "4g" \
+  --arg default.hive_incremental_target_table \
+  --arg default.hive_incremental_source_table \
+  --arg s3a://rapids-demo-buk-bb66b705/data/hive_incremental
 ```
 
 ### Use Case 12b: Iceberg Incremental
@@ -141,7 +156,9 @@ A Spark Application written in Spark 2 that has been migrated to Spark 3 is crea
 ```
 cde spark submit code/use_case_12b_iceberg_incremental.py \
   --executor-cores 4 \
-  --executor-memory "4g"
+  --executor-memory "4g" \
+  --arg s3a://rapids-demo-buk-bb66b705/data/iceberg_incremental \
+  --arg spark_catalog.default.iceberg_incremental_read_table
 ```
 
 ### Use Case 13a: Hive Partition Evolution
@@ -151,7 +168,8 @@ A Spark Application written in Spark 2 that has been migrated to Spark 3 is crea
 ```
 cde spark submit code/use_case_13a_hive_part_evol.py \
   --executor-cores 4 \
-  --executor-memory "4g"
+  --executor-memory "4g" \
+  --arg default.hive_part_evol_table
 ```
 
 ### Use Case 13b: Iceberg Partition Evolution
@@ -161,5 +179,6 @@ A Spark Application written in Spark 2 that has been migrated to Spark 3 is crea
 ```
 cde spark submit code/use_case_13b_iceberg_part_evol.py \
   --executor-cores 4 \
-  --executor-memory "4g"
+  --executor-memory "4g" \
+  --arg spark_catalog.default.iceberg_part_evol_table
 ```
