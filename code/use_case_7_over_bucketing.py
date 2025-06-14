@@ -44,7 +44,6 @@ from pyspark.sql.functions import col, rand, when
 spark = SparkSession.builder \
     .appName("BadBucketingApp") \
     .config("spark.sql.sources.bucketing.enabled", "true") \
-    .config("spark.sql.shuffle.partitions", "200") \
     .getOrCreate()
 
 # Synthetic data (relatively small but spread over many buckets)
