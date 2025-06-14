@@ -122,7 +122,7 @@ cde spark submit code/use_case_5_bad_da.py \
 cde resource upload --name spark_observability_hol \
   --local-path code/use_case_5_bad_da.py
 
-cde job create --name use_case_5_unordered_shuffles \
+cde job create --name use_case_5_bad_da \
   --type spark \
   --application-file use_case_5_bad_da.py \
   --mount-1-resource spark_observability_hol
