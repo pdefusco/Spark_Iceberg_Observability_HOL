@@ -45,6 +45,7 @@ A Spark job with Dynamic Allocation where max and min executors are set wide, ea
 
 ```
 cde spark submit code/use_case_5_unordered_shuffles.py \
+  --conf spark.sql.shuffle.partitions=10000 \
   --executor-cores 4 \
   --executor-memory "4g"
 ```
@@ -55,6 +56,7 @@ A Spark job where shuffle partitions property is set too high or too low.
 
 ```
 cde spark submit code/use_case_6_high_sp.py \
+  --conf spark.sql.shuffle.partitions=10000 \
   --executor-cores 4 \
   --executor-memory "4g"
 ```
@@ -75,6 +77,7 @@ A Spark Application written in Spark 2 that has been migrated to Spark 3 is crea
 
 ```
 cde spark submit code/use_case_8_unordered_shuffles.py \
+  --conf spark.sql.shuffle.partitions=10000 \
   --executor-cores 4 \
   --executor-memory "4g"
 ```
@@ -85,6 +88,7 @@ A Spark Application written in Spark 2 that has been migrated to Spark 3 is crea
 
 ```
 cde spark submit code/use_case_9_overbroadcasting.py \
+  --conf spark.sql.autoBroadcastJoinThreshold=-1 \
   --executor-cores 4 \
   --executor-memory "4g"
 ```
@@ -95,6 +99,7 @@ A Spark Application written in Spark 2 that has been migrated to Spark 3 is crea
 
 ```
 cde spark submit code/use_case_10_improper_repartitoning.py \
+  --conf spark.sql.shuffle.partitions=200 \
   --executor-cores 4 \
   --executor-memory "4g"
 ```

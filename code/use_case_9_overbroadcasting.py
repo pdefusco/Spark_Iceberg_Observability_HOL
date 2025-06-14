@@ -49,7 +49,6 @@ print(writeLocation)
 # Initialize SparkSession
 spark = SparkSession.builder \
     .appName("UnsafeBroadcastJoinOOM") \
-    .config("spark.sql.autoBroadcastJoinThreshold", -1) \  # Disable automatic broadcast
     .getOrCreate()
 
 # Generate large fact DataFrame (100 million rows)
