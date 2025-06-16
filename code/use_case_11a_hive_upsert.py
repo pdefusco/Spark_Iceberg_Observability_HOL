@@ -38,7 +38,7 @@
 #***************************************************************************/
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, rand, expr, lit
+from pyspark.sql.functions import col, rand, expr, lit, to_timestamp
 import random
 import datetime
 import sys
@@ -46,8 +46,10 @@ import sys
 print("Write Tables:")
 writeHiveTableOne = sys.argv[1]
 writeHiveTableTwo = sys.argv[2]
+writeHiveTableThree = sys.argv[3]
 print(writeHiveTableOne)
 print(writeHiveTableTwo)
+print(writeHiveTableThree)
 
 # Initialize SparkSession with Hive support
 spark = SparkSession.builder \
@@ -68,14 +70,16 @@ df1 = spark.range(0, NUM_ROWS).toDF("id") \
     .withColumn("category", expr(f"CASE id % 5 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' WHEN 3 THEN 'D' ELSE 'E' END")) \
     .withColumn("value1", (rand() * 1000).cast("double")) \
     .withColumn("value2", (rand() * 100).cast("double")) \
-    .withColumn("event_time", expr(f"timestamp('{base_ts}') + interval int(id % 50) days"))
+    .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))"))
+    #.withColumn("event_time", expr(f"timestamp('{base_ts}') + interval int(id % 50) days"))
 
 # Generate Dataset 2 (Source Table) — overlaps some IDs and timestamps differ
 df2 = spark.range(NUM_ROWS // 2, NUM_ROWS + NUM_ROWS // 2).toDF("id") \
     .withColumn("category", expr(f"CASE id % 5 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' WHEN 3 THEN 'D' ELSE 'E' END")) \
     .withColumn("value1", (rand() * 1000).cast("double")) \
     .withColumn("value2", (rand() * 100).cast("double")) \
-    .withColumn("event_time", expr(f"timestamp('{base_ts}') + interval int((id % 50) + 1) days"))
+    .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))"))
+    #.withColumn("event_time", expr(f"timestamp('{base_ts}') + interval int((id % 50) + 1) days"))
 
 # Save Dataset 1 to Hive external table
 df1.write.mode("overwrite") \
@@ -93,7 +97,7 @@ spark.sql("""
     CREATE OR REPLACE TEMP VIEW merged_upsert AS
     SELECT *
     FROM (
-        SELECT *, ROW_NUMBER() OVER (PARTITION BY id ORDER BY event_time DESC) as rn
+        SELECT *, ROW_NUMBER() OVER (PARTITION BY id ORDER BY event_ts DESC) as rn
         FROM (
             SELECT * FROM {0}
             UNION ALL
@@ -103,12 +107,12 @@ spark.sql("""
     WHERE rn = 1
 """.format(writeHiveTableOne, writeHiveTableTwo))
 
+df3 = spark.sql("SELECT * FROM merged_upsert")
+
 # Overwrite the target table with upserted result
-spark.table("merged_upsert") \
-    .drop("rn") \
-    .write.mode("overwrite") \
+df3.write.mode("overwrite") \
     .format("parquet") \
-    .saveAsTable(writeHiveTableOne)
+    .saveAsTable(writeHiveTableThree)
 
 print("Upsert operation completed without Iceberg.")
 

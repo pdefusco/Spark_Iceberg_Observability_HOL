@@ -38,7 +38,7 @@
 #***************************************************************************/
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, rand, expr
+from pyspark.sql.functions import col, rand, expr, lit, to_timestamp
 import datetime
 import sys
 
@@ -62,14 +62,16 @@ df1 = spark.range(0, NUM_ROWS).toDF("id") \
     .withColumn("category", expr("CASE id % 5 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' WHEN 3 THEN 'D' ELSE 'E' END")) \
     .withColumn("value1", (rand() * 1000).cast("double")) \
     .withColumn("value2", (rand() * 100).cast("double")) \
-    .withColumn("event_time", expr(f"timestamp('{base_ts}') + interval int(id % 50) days"))
+    .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))"))
+    #.withColumn("event_time", expr(f"timestamp('{base_ts}') + interval int(id % 50) days"))
 
 # Generate Dataset 2 (Source)
 df2 = spark.range(NUM_ROWS // 2, NUM_ROWS + NUM_ROWS // 2).toDF("id") \
     .withColumn("category", expr("CASE id % 5 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' WHEN 3 THEN 'D' ELSE 'E' END")) \
     .withColumn("value1", (rand() * 1000).cast("double")) \
     .withColumn("value2", (rand() * 100).cast("double")) \
-    .withColumn("event_time", expr(f"timestamp('{base_ts}') + interval int((id % 50) + 1) days"))
+    .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))"))
+    #.withColumn("event_time", expr(f"timestamp('{base_ts}') + interval id % 50) + 1) days"))
 
 # Write target table (Iceberg)
 spark.sql("DROP TABLE IF EXISTS spark_catalog.default.target_table")
@@ -84,7 +86,7 @@ spark.sql("""
     MERGE INTO {0} AS target
     USING {1} AS source
     ON target.id = source.id
-    WHEN MATCHED AND source.event_time > target.event_time THEN
+    WHEN MATCHED AND source.event_ts > target.event_ts THEN
       UPDATE SET *
     WHEN NOT MATCHED THEN
       INSERT *

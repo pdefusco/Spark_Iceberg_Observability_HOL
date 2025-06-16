@@ -300,7 +300,8 @@ cde job run --name use_case_11a_hive_upsert \
   --executor-cores 4 \
   --executor-memory "4g" \
   --arg default.hive_upsert_target_table \
-  --arg default.hive_upsert_source_table
+  --arg default.hive_upsert_source_table \
+  --arg default.hive_usert_final_table
 ```
 
 ### Use Case 11b: Iceberg Merge
