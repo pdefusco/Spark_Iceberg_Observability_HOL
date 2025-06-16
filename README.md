@@ -357,8 +357,8 @@ cde job create --name use_case_12a_hive_incremental \
 cde job run --name use_case_12a_hive_incremental \
   --executor-cores 4 \
   --executor-memory "4g" \
-  --arg default.hive_incremental_target_table \
-  --arg default.hive_incremental_source_table \
+  --arg default.hive_usert_final_table \
+  --arg default.hive_usert_final_table \
   --arg s3a://rapids-demo-buk-bb66b705/data/hive_incremental
 ```
 
@@ -387,7 +387,7 @@ cde job run --name use_case_12b_iceberg_incremental \
   --executor-cores 4 \
   --executor-memory "4g" \
   --arg s3a://rapids-demo-buk-bb66b705/data/iceberg_incremental \
-  --arg spark_catalog.default.iceberg_incremental_read_table
+  --arg spark_catalog.default.iceberg_merge_target_table
 ```
 
 ### Use Case 13a: Hive Partition Evolution

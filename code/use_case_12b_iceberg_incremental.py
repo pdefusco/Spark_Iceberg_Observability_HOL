@@ -54,10 +54,10 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 # Step 1: Get the snapshot history of the table
-history_df = spark.sql("SELECT * FROM {}.history ORDER BY timestamp".format(writeIcebergTableOne))
+history_df = spark.sql("SELECT * FROM {}.history ORDER BY made_current_at".format(writeIcebergTableOne))
 
 # Step 2: Extract start and end snapshot IDs (assuming last two snapshots)
-snapshots = history_df.orderBy(col("timestamp")).collect()
+snapshots = history_df.orderBy(col("made_current_at")).collect()
 
 if len(snapshots) < 2:
     raise Exception("Not enough snapshots to perform incremental read.")

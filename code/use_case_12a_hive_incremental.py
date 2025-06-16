@@ -73,7 +73,7 @@ joined_df = target_df.alias("target").join(
 # - Or have a newer event_time (updates)
 changed_rows = joined_df.filter(
     col("source.id").isNull() |  # Inserted
-    (col("target.event_time") > col("source.event_time"))  # Updated
+    (col("target.event_ts") > col("source.event_ts"))  # Updated
 ).select("target.*")
 
 # Write changed rows to S3 in Parquet format
