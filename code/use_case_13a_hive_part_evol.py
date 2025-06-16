@@ -38,7 +38,7 @@
 #***************************************************************************/
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import expr, rand
+from pyspark.sql.functions import col, rand, expr, lit, to_timestamp
 import datetime
 import sys
 
@@ -63,26 +63,24 @@ df_initial = spark.range(0, NUM_ROWS).toDF("id") \
     .withColumn("category", expr("CASE id % 4 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' ELSE 'D' END")) \
     .withColumn("value1", (rand() * 1000).cast("double")) \
     .withColumn("value2", (rand() * 5000).cast("double")) \
-    .withColumn("event_ts", expr(f"timestamp('{BASE_DATE}') + interval int(id % 90) days")) \
+    .withColumn("event_ts", expr(f"date_add(to_date('{BASE_DATE}'), int(id % 30))")) \
     .withColumn("month", expr("date_format(event_ts, 'yyyy-MM')"))
 
 # Step 2: Write the initial batch partitioned by month
-spark.sql(f"DROP TABLE IF EXISTS {TABLE_NAME}")
+spark.sql(f"DROP TABLE IF EXISTS {writeHiveTableOne}")
 df_initial.write \
     .mode("overwrite") \
     .format("parquet") \
     .partitionBy("month") \
     .saveAsTable(writeHiveTableOne)
-
 #    .option("path", TABLE_PATH) \
-
 
 # Step 3: Generate new batch of data (later range of IDs, same schema)
 df_new_batch = spark.range(NUM_ROWS, NUM_ROWS * 2).toDF("id") \
     .withColumn("category", expr("CASE id % 4 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' ELSE 'D' END")) \
     .withColumn("value1", (rand() * 1000).cast("double")) \
     .withColumn("value2", (rand() * 5000).cast("double")) \
-    .withColumn("event_ts", expr(f"timestamp('{BASE_DATE}') + interval int(id % 90) days")) \
+    .withColumn("event_ts", expr(f"date_add(to_date('{BASE_DATE}'), int(id % 30))")) \
     .withColumn("month", expr("date_format(event_ts, 'yyyy-MM')"))
 
 # Step 4: Append the new batch to the same Hive table (partitioned by month)
@@ -91,7 +89,6 @@ df_new_batch.write \
     .format("parquet") \
     .partitionBy("month") \
     .saveAsTable(writeHiveTableOne)
-
 #    .option("path", TABLE_PATH) \
 
 # Step 5: Show the combined data

@@ -60,7 +60,7 @@ df_month = spark.range(0, NUM_ROWS).toDF("id") \
     .withColumn("category", expr("CASE id % 4 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' ELSE 'D' END")) \
     .withColumn("value1", (rand() * 1000).cast("double")) \
     .withColumn("value2", (rand() * 5000).cast("double")) \
-    .withColumn("event_ts", expr(f"timestamp('{BASE_DATE}') + interval int(id % 90) days")) \
+    .withColumn("event_ts", expr(f"date_add(to_date('{BASE_DATE}'), int(id % 30))")) \
     .withColumn("month", expr("date_format(event_ts, 'yyyy-MM')")) \
     .withColumn("day", expr("date_format(event_ts, 'yyyy-MM-dd')"))
 
@@ -88,7 +88,9 @@ df_day = spark.range(NUM_ROWS, NUM_ROWS * 2).toDF("id") \
     .withColumn("category", expr("CASE id % 4 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' ELSE 'D' END")) \
     .withColumn("value1", (rand() * 1000).cast("double")) \
     .withColumn("value2", (rand() * 5000).cast("double")) \
-    .withColumn("event_ts", expr(f"timestamp('{BASE_DATE}') + interval int(id % 90) days"))
+    .withColumn("event_ts", expr(f"date_add(to_date('{BASE_DATE}'), int(id % 30))")) \
+    .withColumn("month", expr("date_format(event_ts, 'yyyy-MM')")) \
+    .withColumn("day", expr("date_format(event_ts, 'yyyy-MM-dd')"))
 
 # Append new records (now partitioned by day)
 df_day.writeTo(writeIcebergTableOne) \
