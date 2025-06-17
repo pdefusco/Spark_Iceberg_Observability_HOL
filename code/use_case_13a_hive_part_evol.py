@@ -50,11 +50,12 @@ print(writeHiveTableOne)
 spark = SparkSession.builder \
     .appName("HivePartitionAppendByMonth") \
     .config("spark.sql.shuffle.partitions", "200") \
+    .appName("UseCase13a") \
     .enableHiveSupport() \
     .getOrCreate()
 
 # Parameters
-NUM_ROWS = 500_000
+NUM_ROWS = 500_000_000
 BASE_DATE = datetime.datetime(2023, 1, 1)
 #TABLE_PATH = "/tmp/hive_partition_append_by_month"
 

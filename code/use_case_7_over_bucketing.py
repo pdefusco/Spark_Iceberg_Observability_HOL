@@ -38,7 +38,7 @@
 #***************************************************************************/
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, rand, when
+from pyspark.sql.functions import col, rand, when, expr
 import sys
 
 print("Write Table:")
@@ -47,14 +47,14 @@ print(writeHiveTable)
 
 # Initialize SparkSession
 spark = SparkSession.builder \
-    .appName("BadBucketingApp") \
+    .appName("UseCase7") \
     .getOrCreate()
 
 # Synthetic data (relatively small but spread over many buckets)
 df = spark.range(0, 1_000_000).toDF("id") \
     .withColumn("user_id", (col("id") % 100_000)) \
     .withColumn("amount", (rand() * 100).cast("double")) \
-    .withColumn("country", when(col("id") % 2 == 0, "US").otherwise("IN"))
+    .withColumn("country", when(col("id") % 2 == 0, "US").otherwise("IN")) \
     .withColumn("category_index", (col("id") % 20)) \
     .withColumn("category", expr("""
         CASE category_index
@@ -79,6 +79,8 @@ df = spark.range(0, 1_000_000).toDF("id") \
             WHEN 18 THEN 'S'
             WHEN 19 THEN 'T'
             WHEN 20 THEN 'U'
+            ELSE 'Z'
+        END
     """))
 
 # Write with bucketing into thousands of small files

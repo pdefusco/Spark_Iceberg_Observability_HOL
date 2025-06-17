@@ -38,36 +38,90 @@
 #***************************************************************************/
 
 from pyspark.sql import SparkSession
+from pyspark.sql.functions import expr, rand, lit, when, sum, avg, count, col
 import random
+import sys
 
-# Create Spark Session
+#print("Write Storage Location:")
+#writeLocation = sys.argv[1]
+#print(writeLocation)
+
+# Create SparkSession
 spark = SparkSession.builder \
-    .appName("SkewedData") \
+    .appName("UseCase1") \
     .getOrCreate()
 
-# Generate Synthetic Data
-def generate_data():
-    data = []
+# Total records
+NUM_ROWS = 1_000_000_000
 
-    # Add many records with the same skewed key
-    for _ in range(5_000_000):
-        data.append(("skewed", random.randint(1, 100)))
+# Create skewed data
+# 95% of rows will have the key = 'hot_key', rest are spread across 1000 other keys
+df = spark.range(NUM_ROWS).toDF("id") \
+    .withColumn("skew_key", when((rand() < 0.80), lit("hot_key"))
+                .otherwise(expr("concat('key_', cast(int(rand() * 1000) as string))"))) \
+    .withColumn("value", (rand() * 1000).cast("int"))
 
-    # Add fewer records with other keys
-    for i in range(1, 1001):
-        for _ in range(100):
-            data.append((f"key_{i}", random.randint(1, 100)))
+# Show distribution (optional)
+# df.groupBy("skew_key").count().orderBy("count", ascending=False).show(10, truncate=False)
 
-    return data
+small_df = spark.createDataFrame([("hot_key", "HOT"), ("key_1", "cold"), ("key_2", "cold2")], ["skew_key", "label"])
 
+# Skewed join
+joined = df.join(small_df, on="skew_key", how="left")
+joined.groupBy("skew_key").count().show()
 
-rdd = spark.sparkContext.parallelize(generate_data())
+# Trigger a skewed wide transformation: groupBy with aggregation
+result = df.groupBy("skew_key").agg(avg("value").alias("avg value"), sum("value").alias("sum_val"))
 
-# Group By Key
-grouped = rdd.groupByKey()
+# Action to execute the plan
+result.show(100, truncate=False)
 
-# Run the Graph
-for key, count in grouped.take(10):
-    print(f"{key}: {count}")
+# Generate synthetic fact data (large dataset)
+fact_df = spark.range(0, 10_000_000).toDF("transaction_id") \
+    .withColumn("customer_id", (col("transaction_id") % 100000)) \
+    .withColumn("amount", (rand() * 1000).cast("double")) \
+    .withColumn("region", when(col("transaction_id") % 2 == 0, "US").otherwise("EU"))
+
+# Generate synthetic dimension data (small dataset)
+dim_df = spark.range(0, 10_000_000).toDF("customer_id") \
+    .withColumn("customer_type", when(col("customer_id") % 3 == 0, "Gold")
+                .when(col("customer_id") % 3 == 1, "Silver")
+                .otherwise("Bronze"))
+
+# Step 1: Shuffle-heavy groupBy BEFORE any filtering
+agg_df = fact_df.groupBy("customer_id").agg(
+    count("*").alias("txn_count"),
+    sum("amount").alias("total_spent")
+)
+
+# Step 2: Repartition unnecessarily before join
+agg_df = agg_df.repartition(500, "customer_id")
+
+# Step 3: Join large datasets before filtering
+joined_df = agg_df.join(dim_df, on="customer_id", how="inner")
+
+# Step 4: Filter on region AFTER join (hurts partition pruning)
+joined_with_region = joined_df.join(fact_df.select("customer_id", "region"), on="customer_id", how="inner") \
+    .filter(col("region") == "US")
+
+# Step 4b: join
+result = result.join(joined_with_region, result["skew_key"] == joined_with_region["customer_id"])
+result.show()
+
+# Step 5: Another wide transformation
+final_df = joined_with_region.groupBy("region", "customer_type").agg(
+    sum("total_spent").alias("region_total_spent")
+)
+
+# Step 6: Repartition again before writing (unnecessary)
+final_df = final_df.repartition(200)
+
+final_df.show()
+
+# Trigger execution
+#final_df.write.mode("overwrite").parquet(writeLocation)
+
+# Optional: Save output to visualize skew in Spark UI
+# result.write.mode("overwrite").parquet("/tmp/skewed_output")
 
 spark.stop()

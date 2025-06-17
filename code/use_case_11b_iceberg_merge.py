@@ -50,11 +50,11 @@ print(writeIcebergTableTwo)
 
 # Set up Spark with Iceberg
 spark = SparkSession.builder \
-    .appName("IcebergUpsertExample") \
+    .appName("UseCase11b") \
     .getOrCreate()
 
 # Parameters
-NUM_ROWS = 5_000_000
+NUM_ROWS = 500_000_000
 base_ts = datetime.datetime(2020, 1, 1)
 
 # Generate Dataset 1 (Target)
@@ -74,11 +74,11 @@ df2 = spark.range(NUM_ROWS // 2, NUM_ROWS + NUM_ROWS // 2).toDF("id") \
     #.withColumn("event_time", expr(f"timestamp('{base_ts}') + interval id % 50) + 1) days"))
 
 # Write target table (Iceberg)
-spark.sql("DROP TABLE IF EXISTS spark_catalog.default.target_table")
+spark.sql("DROP TABLE IF EXISTS {}".format(writeIcebergTableOne))
 df1.writeTo(writeIcebergTableOne).using("iceberg").create()
 
 # Write source table (Iceberg)
-spark.sql("DROP TABLE IF EXISTS spark_catalog.default.source_table")
+spark.sql("DROP TABLE IF EXISTS {}".format(writeIcebergTableTwo))
 df2.writeTo(writeIcebergTableTwo).using("iceberg").create()
 
 # Perform UPSERT using Iceberg MERGE INTO

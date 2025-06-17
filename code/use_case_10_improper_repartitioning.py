@@ -47,11 +47,11 @@ print(writeLocation)
 
 # Create Spark session
 spark = SparkSession.builder \
-    .appName("BadPartitioningOOM") \
+    .appName("UseCase10") \
     .getOrCreate()
 
 # Create synthetic large dataset (100 million rows)
-df = spark.range(0, 100_000_000).toDF("id") \
+df = spark.range(0, 10_000_000).toDF("id") \
     .withColumn("user_id", col("id") % 1000000) \
     .withColumn("amount", (rand() * 100).cast("double")) \
     .withColumn("category", (col("id") % 5))

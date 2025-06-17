@@ -53,7 +53,7 @@ print(writeLocation)
 
 # Initialize Spark session (Hive aware)
 spark = SparkSession.builder \
-    .appName("ExtractChangedRowsFromUpsert") \
+    .appName("UseCase12a") \
     .enableHiveSupport() \
     .getOrCreate()
 

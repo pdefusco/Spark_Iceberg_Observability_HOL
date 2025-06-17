@@ -47,17 +47,17 @@ print(writeLocation)
 
 # Create SparkSession
 spark = SparkSession.builder \
-    .appName("SyntheticWideTransformations") \
+    .appName("UseCase5") \
     .getOrCreate()
 
 # Generate synthetic fact data (large dataset)
-fact_df = spark.range(0, 10_000_000).toDF("transaction_id") \
+fact_df = spark.range(0, 100_000_000).toDF("transaction_id") \
     .withColumn("customer_id", (col("transaction_id") % 100000)) \
     .withColumn("amount", (rand() * 1000).cast("double")) \
     .withColumn("region", when(col("transaction_id") % 2 == 0, "US").otherwise("EU"))
 
 # Generate synthetic dimension data (small dataset)
-dim_df = spark.range(0, 100_000).toDF("customer_id") \
+dim_df = spark.range(0, 1_000_000).toDF("customer_id") \
     .withColumn("customer_type", when(col("customer_id") % 3 == 0, "Gold")
                 .when(col("customer_id") % 3 == 1, "Silver")
                 .otherwise("Bronze"))

@@ -48,11 +48,11 @@ print(writeIcebergTableOne)
 
 # Initialize Spark with Iceberg and Hive catalog
 spark = SparkSession.builder \
-    .appName("IcebergPartitionEvolutionExample") \
+    .appName("UseCase13b") \
     .getOrCreate()
 
 # Parameters
-NUM_ROWS = 1_000_000
+NUM_ROWS = 100_000_000
 BASE_DATE = datetime.datetime(2023, 1, 1)
 
 # Step 1: Generate synthetic data (initial batch)

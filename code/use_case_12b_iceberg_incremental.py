@@ -51,6 +51,7 @@ print(writeIcebergTableOne)
 
 # Initialize Spark session with Iceberg
 spark = SparkSession.builder \
+    .appName("UseCase12b") \
     .getOrCreate()
 
 # Step 1: Get the snapshot history of the table

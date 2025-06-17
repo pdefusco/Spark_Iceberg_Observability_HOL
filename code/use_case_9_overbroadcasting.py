@@ -48,7 +48,7 @@ print(writeLocation)
 
 # Initialize SparkSession
 spark = SparkSession.builder \
-    .appName("UnsafeBroadcastJoinOOM") \
+    .appName("UseCase9") \
     .getOrCreate()
 
 # Generate large fact DataFrame (100 million rows)
@@ -57,7 +57,7 @@ fact_df = spark.range(0, 100_000_000).toDF("transaction_id") \
     .withColumn("amount", (rand() * 100).cast("double"))
 
 # Generate "supposedly small" dimension DataFrame (but actually large: 10 million rows)
-dim_df = spark.range(0, 10_000_000).toDF("user_id") \
+dim_df = spark.range(0, 5_000_000).toDF("user_id") \
     .withColumn("segment", (col("user_id") % 5)) \
     .withColumn("score", (rand() * 100).cast("double"))
 

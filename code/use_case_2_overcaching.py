@@ -42,7 +42,7 @@ from pyspark.sql.functions import rand
 
 def main():
     spark = SparkSession.builder \
-        .appName("OverCaching") \
+        .appName("UseCase2") \
         .getOrCreate()
 
     # Generate large datasets and cache them without unpersisting

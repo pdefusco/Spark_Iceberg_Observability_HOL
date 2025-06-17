@@ -24,8 +24,11 @@ cde job create --name use_case_1_task_skew \
   --mount-1-resource spark_observability_hol
 
 cde job run --name use_case_1_task_skew \
-  --executor-memory "1g" \
-  --executor-cores 1
+  --executor-memory "4g" \
+  --executor-cores 2 \
+  --conf spark.dynamicAllocation.minExecutors=1 \
+  --conf spark.dynamicAllocation.maxExecutors=10 \
+  --conf spark.sql.shuffle.partitions=10
 ```
 
 ### Use Case 2: Overcaching
@@ -136,7 +139,6 @@ cde job run --name use_case_5_bad_da \
   --arg s3a://rapids-demo-buk-bb66b705/data/bad_dynamic_allocation
 ```
 
-
 ### Use Case 6: Misconfigured Resources - High Shuffle Partitions
 
 A Spark job where shuffle partitions property is set too high or too low.
@@ -243,7 +245,7 @@ cde job create --name use_case_9_overbroadcasting \
 cde job run --name use_case_9_overbroadcasting \
   --conf spark.sql.autoBroadcastJoinThreshold=-1 \
   --executor-cores 4 \
-  --executor-memory "4g" \
+  --executor-memory "8g" \
   --arg s3a://rapids-demo-buk-bb66b705/data/overbroadcasting
 ```
 

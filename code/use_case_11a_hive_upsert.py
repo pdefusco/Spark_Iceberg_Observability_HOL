@@ -53,13 +53,14 @@ print(writeHiveTableThree)
 
 # Initialize SparkSession with Hive support
 spark = SparkSession.builder \
+    .appName("UseCase11a") \
     .enableHiveSupport() \
     .getOrCreate()
 
 #    .appName("UpsertWithoutIceberg") \
 
 # Settings
-NUM_ROWS = 5_000_000
+NUM_ROWS = 500_000_000
 CATEGORIES = ['A', 'B', 'C', 'D', 'E']
 
 # Helper: Generate random base timestamp
