@@ -443,3 +443,21 @@ cde job run --name use_case_13b_iceberg_part_evol \
   --executor-memory "4g" \
   --arg spark_catalog.default.iceberg_part_evol_table
 ```
+
+### Use Case 14: Overcaching and Task Skew
+
+Combining Use Cases 1 and 2 into one.
+
+```
+cde resource upload --name spark_observability_hol \
+  --local-path code/use_case_14_skew_overcaching.py
+
+cde job create --name use_case_14_skew_overcaching \
+  --type spark \
+  --application-file use_case_14_skew_overcaching.py \
+  --mount-1-resource spark_observability_hol
+
+cde job run --name use_case_14_skew_overcaching \
+  --executor-cores 4 \
+  --executor-memory "8g"
+```
