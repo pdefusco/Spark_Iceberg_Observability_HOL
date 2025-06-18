@@ -39,24 +39,22 @@
 
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import rand
+from pyspark.sql.functions import rand, col
 
 spark = SparkSession.builder \
     .appName("UseCase14") \
     .getOrCreate()
 
-"""# Generate large datasets and cache them without unpersisting
+# Generate large datasets and cache them without unpersisting
 for i in range(10):
     print(f"Creating and caching DataFrame {i}")
     df = spark.range(0, 100_000_000).withColumn("rand", rand()) \
-        .withColumn("customer_id", (col("transaction_id") % 100000))# Large DataFrame
+        .withColumn("customer_id", rand())# Large DataFrame
     df.cache()
     df.count()  # Force evaluation to cache it
     print(f"DataFrame {i} cached")
-"""
 
-
-# Generate synthetic fact data (large dataset)
+"""# Generate synthetic fact data (large dataset)
 fact_df = spark.range(0, 100_000_000).toDF("transaction_id") \
     .withColumn("customer_id", (col("transaction_id") % 100000)) \
     .withColumn("amount", (rand() * 1000).cast("double")) \
@@ -75,7 +73,7 @@ dim_df = spark.range(0, 1_000_000).toDF("customer_id") \
 agg_df = fact_df.groupBy("customer_id").agg(
     count("*").alias("txn_count"),
     sum("amount").alias("total_spent")
-)
+)"""
 
 def stdev_rand_list(size):
   return size*size*size

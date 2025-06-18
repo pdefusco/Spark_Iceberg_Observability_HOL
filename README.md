@@ -3,11 +3,15 @@
 
 ### Use Case 1: Task Skew
 
+CDE Spark Submit
+
 ```
 cde spark submit code/use_case_1_task_skew.py \
   --executor-memory "1g" \
   --executor-cores 1
 ```
+
+CDE Job
 
 ```
 cde resource create --name spark_observability_hol \
@@ -30,6 +34,29 @@ cde job run --name use_case_1_task_skew \
   --conf spark.dynamicAllocation.maxExecutors=10 \
   --conf spark.sql.shuffle.partitions=10
 ```
+
+DataHub Livy-Submit
+
+```
+curl -X POST https://go01-obsr-de-gateway.go01-dem.ylcu-atmi.cloudera.site:443/go01-obsr-de/cdp-proxy-api/livy_for_spark3/batches \
+ -H "Content-Type: application/json" \
+ -u pauldefusco:pwd! \
+ -d '{
+  "file": "/user/pauldefusco/use_case_1_task_skew.py",
+  "name": "CDP-Livy-UseCase-1",
+  "conf": {
+   "spark.dynamicAllocation.enabled": "true",
+   "spark.dynamicAllocation.minExecutors": "2",
+   "spark.dynamicAllocation.maxExecutors": "10",
+   "spark.sql.shuffle.partitions": "200"
+  },
+  "driverMemory": "4g",
+  "executorMemory": "4g",
+  "executorCores": 2,
+  "numExecutors": 4
+ }'
+```
+
 
 ### Use Case 2: Overcaching
 
@@ -334,6 +361,40 @@ cde job run --name use_case_11b_iceberg_merge \
   --arg spark_catalog.default.iceberg_merge_source_table
 ```
 
+### Use Case 11c: Iceberg Merge Solution
+
+A Spark Application written in Spark 2 that has been migrated to Spark 3 is creating thousands of small files when writing, after applying the bucketing operation as it was applied in Spark 2.
+
+```
+cde spark submit code/use_case_11c_iceberg_merge_sol.py \
+  --executor-cores 4 \
+  --executor-memory "4g" \
+  --arg spark_catalog.default.iceberg_merge_target_table \
+  --arg spark_catalog.default.iceberg_merge_source_table
+```
+
+```
+cde resource upload --name spark_observability_hol \
+  --local-path code/use_case_11c_iceberg_merge_sol.py
+
+cde job create --name use_case_11c_iceberg_merge_sol \
+  --type spark \
+  --application-file use_case_11c_iceberg_merge_sol.py \
+  --mount-1-resource spark_observability_hol
+
+cde job run --name use_case_11c_iceberg_merge_sol \
+  --executor-cores 4 \
+  --executor-memory "4g" \
+  --arg spark_catalog.default.iceberg_merge_target_table \
+  --arg spark_catalog.default.iceberg_merge_source_table
+```
+
+![alt text](img/usecase_11_b_task_skew_1.png)
+
+![alt text](img/usecase_11_b_task_skew_2.png)
+
+![alt text](img/usecase_11_b_task_skew_3.png)
+
 ### Use Case 12a: Hive Incremental
 
 A Spark Application written in Spark 2 that has been migrated to Spark 3 is creating thousands of small files when writing, after applying the bucketing operation as it was applied in Spark 2.
@@ -460,4 +521,26 @@ cde job create --name use_case_14_skew_overcaching \
 cde job run --name use_case_14_skew_overcaching \
   --executor-cores 4 \
   --executor-memory "8g"
+```
+
+DataHub Submit
+
+```
+curl -X POST https://go01-obsr-de-gateway.go01-dem.ylcu-atmi.cloudera.site/go01-obsr-de/cdp-proxy-api/livy_for_spark3/batches \
+ -H "Content-Type: application/json" \
+ -u pauldefusco:Paolino1987! \
+ -d '{
+  "file": "/user/pauldefusco/use_case_14_skew_overcaching.py",
+  "name": "CDP-Livy-UseCase-14",
+  "conf": {
+   "spark.dynamicAllocation.enabled": "true",
+   "spark.dynamicAllocation.minExecutors": "2",
+   "spark.dynamicAllocation.maxExecutors": "10",
+   "spark.sql.shuffle.partitions": "200"
+  },
+  "driverMemory": "4g",
+  "executorMemory": "4g",
+  "executorCores": 2,
+  "numExecutors": 4
+ }'
 ```
