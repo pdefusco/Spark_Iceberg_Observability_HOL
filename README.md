@@ -361,6 +361,12 @@ cde job run --name use_case_11b_iceberg_merge \
   --arg spark_catalog.default.iceberg_merge_source_table
 ```
 
+![alt text](img/usecase_11_b_task_skew_1.png)
+
+![alt text](img/usecase_11_b_task_skew_2.png)
+
+![alt text](img/usecase_11_b_task_skew_3.png)
+
 ### Use Case 11c: Iceberg Merge Solution
 
 A Spark Application written in Spark 2 that has been migrated to Spark 3 is creating thousands of small files when writing, after applying the bucketing operation as it was applied in Spark 2.
@@ -388,12 +394,6 @@ cde job run --name use_case_11c_iceberg_merge_sol \
   --arg spark_catalog.default.iceberg_merge_target_table \
   --arg spark_catalog.default.iceberg_merge_source_table
 ```
-
-![alt text](img/usecase_11_b_task_skew_1.png)
-
-![alt text](img/usecase_11_b_task_skew_2.png)
-
-![alt text](img/usecase_11_b_task_skew_3.png)
 
 ### Use Case 12a: Hive Incremental
 
