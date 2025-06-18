@@ -38,29 +38,28 @@
 #***************************************************************************/
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import expr, rand
+from pyspark.sql.functions import expr, rand, col
 import datetime
 import sys
 
-# Table names from args
+# Parse input
 writeIcebergTableOne = sys.argv[1]
 writeIcebergTableTwo = sys.argv[2]
 
-# Set up Spark with AQE
+# Spark setup
 spark = SparkSession.builder \
-    .appName("OptimizedIcebergMerge") \
+    .appName("IcebergMergeWithSalting") \
     .config("spark.sql.adaptive.enabled", "true") \
     .config("spark.sql.adaptive.skewJoin.enabled", "true") \
     .config("spark.sql.adaptive.advisoryPartitionSizeInBytes", 64 * 1024 * 1024) \
     .config("spark.sql.shuffle.partitions", "256") \
     .getOrCreate()
 
-# Parameters
 NUM_ROWS = 500_000_000
+SALT_BUCKETS = 16
 base_ts = datetime.datetime(2020, 1, 1)
-SALT_BUCKETS = 8
 
-# Generate Dataset 1
+# Generate target DataFrame (df1)
 df1 = spark.range(0, NUM_ROWS).toDF("id") \
     .withColumn("category", expr("CASE id % 5 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' WHEN 3 THEN 'D' ELSE 'E' END")) \
     .withColumn("value1", (rand() * 1000).cast("double")) \
@@ -68,19 +67,19 @@ df1 = spark.range(0, NUM_ROWS).toDF("id") \
     .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))")) \
     .withColumn("salt", expr(f"id % {SALT_BUCKETS}"))
 
-# Generate Dataset 2
+# Generate source DataFrame (df2) with randomized salt
 df2 = spark.range(NUM_ROWS // 2, NUM_ROWS + NUM_ROWS // 2).toDF("id") \
     .withColumn("category", expr("CASE id % 5 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' WHEN 3 THEN 'D' ELSE 'E' END")) \
     .withColumn("value1", (rand() * 1000).cast("double")) \
     .withColumn("value2", (rand() * 100).cast("double")) \
     .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))")) \
-    .withColumn("salt", expr(f"id % {SALT_BUCKETS}"))
+    .withColumn("salt", expr(f"CAST(rand() * {SALT_BUCKETS} AS INT)"))
 
-# Drop tables if they exist
+# Drop old tables
 spark.sql(f"DROP TABLE IF EXISTS {writeIcebergTableOne}")
 spark.sql(f"DROP TABLE IF EXISTS {writeIcebergTableTwo}")
 
-# Create tables using SQL DDL to enable bucket partitioning
+# Create bucketed Iceberg tables on id + salt
 spark.sql(f"""
 CREATE TABLE {writeIcebergTableOne} (
     id BIGINT,
@@ -90,8 +89,8 @@ CREATE TABLE {writeIcebergTableOne} (
     event_ts DATE,
     salt INT
 )
-USING ICEBERG
-PARTITIONED BY (bucket(256, id))
+USING iceberg
+PARTITIONED BY (bucket(256, id), bucket(16, salt))
 """)
 
 spark.sql(f"""
@@ -103,15 +102,15 @@ CREATE TABLE {writeIcebergTableTwo} (
     event_ts DATE,
     salt INT
 )
-USING ICEBERG
-PARTITIONED BY (bucket(256, id))
+USING iceberg
+PARTITIONED BY (bucket(256, id), bucket(16, salt))
 """)
 
-# Insert into the created Iceberg tables
+# Insert salted data
 df1.writeTo(writeIcebergTableOne).append()
 df2.writeTo(writeIcebergTableTwo).append()
 
-# Perform the MERGE with salting
+# Salted join via MERGE INTO
 spark.sql(f"""
 MERGE INTO {writeIcebergTableOne} AS target
 USING {writeIcebergTableTwo} AS source
@@ -122,4 +121,4 @@ WHEN NOT MATCHED THEN
   INSERT *
 """)
 
-print("Optimized Iceberg MERGE INTO completed.")
+print("Merge with salting completed successfully.")
