@@ -48,7 +48,7 @@ writeIcebergTableTwo = sys.argv[2]
 
 # Spark setup
 spark = SparkSession.builder \
-    .appName("IcebergMergeSolution") \
+    .appName("IcebergMergeInto") \
     .config("spark.sql.adaptive.enabled", "true") \
     .config("spark.sql.adaptive.skewJoin.enabled", "true") \
     .config("spark.sql.adaptive.advisoryPartitionSizeInBytes", 64 * 1024 * 1024) \
@@ -119,4 +119,4 @@ spark.sql("""
       INSERT *
 """.format(writeIcebergTableOne, writeIcebergTableTwo))
 
-print("Merge with salting completed successfully.")
+print("Merge with bucketing completed successfully.")
