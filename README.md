@@ -115,14 +115,14 @@ g spark_catalog.default.iceberg_merge_source_table
 
 ```
 cde resource upload --name spark_observability_hol \
-  --local-path code/use_case_11c_iceberg_merge_sol.py
+  --local-path code/iceberg_merge_tune_1.py
 
-cde job create --name use_case_11c_iceberg_merge_sol \
+cde job create --name iceberg_merge_tune_1 \
   --type spark \
-  --application-file use_case_11c_iceberg_merge_sol.py \
+  --application-file iceberg_merge_tune_1.py \
   --mount-1-resource spark_observability_hol
 
-cde job run --name use_case_11c_iceberg_merge_sol \
+cde job run --name iceberg_merge_tune_1 \
   --executor-cores 4 \
   --executor-memory "4g" \
   --arg spark_catalog.default.iceberg_merge_target_table \
@@ -140,7 +140,7 @@ curl -X POST https://go01-obsr-de-gateway.go01-dem.ylcu-atmi.cloudera.site/go01-
  -H "Content-Type: application/json" \
  -u pauldefusco:pswd! \
  -d '{
-  "file": "/user/pauldefusco/use_case_14_skew_overcaching.py",
+  "file": "/user/pauldefusco/iceberg_merge_tune_1.py",
   "name": "iceberg_merge_bucketing_your_username",
   "conf": {
    "spark.dynamicAllocation.enabled": "true",
