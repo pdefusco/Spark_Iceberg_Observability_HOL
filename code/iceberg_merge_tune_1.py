@@ -77,7 +77,7 @@ df2 = spark.range(NUM_ROWS // 2, NUM_ROWS + NUM_ROWS // 2).toDF("id") \
 spark.sql(f"DROP TABLE IF EXISTS {writeIcebergTableOne}")
 spark.sql(f"DROP TABLE IF EXISTS {writeIcebergTableTwo}")
 
-# Create bucketed Iceberg tables on id + salt
+# Create bucketed Iceberg tables on id 
 spark.sql(f"""
 CREATE TABLE {writeIcebergTableOne} (
     id BIGINT,
@@ -87,7 +87,7 @@ CREATE TABLE {writeIcebergTableOne} (
     event_ts DATE
 )
 USING iceberg
-PARTITIONED BY (bucket(256, id), bucket(16, salt))
+PARTITIONED BY (bucket(256, id))
 """)
 
 spark.sql(f"""
@@ -99,7 +99,7 @@ CREATE TABLE {writeIcebergTableTwo} (
     event_ts DATE
 )
 USING iceberg
-PARTITIONED BY (bucket(256, id), bucket(16, salt))
+PARTITIONED BY (bucket(256, id))
 """)
 
 # Insert salted data
