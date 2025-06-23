@@ -1,4 +1,4 @@
-# Spark & Iceberg Observability Hands on Lab
+# Spark & Iceberg Observability Use Cases
 
 
 ### Use Case 1: Task Skew
@@ -358,7 +358,9 @@ cde job run --name use_case_11b_iceberg_merge \
   --executor-cores 4 \
   --executor-memory "4g" \
   --arg spark_catalog.default.iceberg_merge_target_table \
-  --arg spark_catalog.default.iceberg_merge_source_table
+  --arg spark_catalog.default.iceberg_merge_source_table \
+  --conf spark.dynamicAllocation.minExecutors=1 \
+  --conf spark.dynamicAllocation.maxExecutors=20
 ```
 
 ![alt text](img/usecase_11_b_task_skew_1.png)
@@ -392,7 +394,9 @@ cde job run --name use_case_11c_iceberg_merge_sol \
   --executor-cores 4 \
   --executor-memory "4g" \
   --arg spark_catalog.default.iceberg_merge_target_table \
-  --arg spark_catalog.default.iceberg_merge_source_table
+  --arg spark_catalog.default.iceberg_merge_source_table \
+  --conf spark.dynamicAllocation.minExecutors=1 \
+  --conf spark.dynamicAllocation.maxExecutors=20
 ```
 
 ### Use Case 12a: Hive Incremental
