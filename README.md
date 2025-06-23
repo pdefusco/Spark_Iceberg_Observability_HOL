@@ -16,22 +16,24 @@
 
 ## Lab: Tune Iceberg Merge Into Spark Job
 
-### Starting Point
+### Lab 1: Starting Spark Application
 
 A Spark Application that upserts data into a target table has been rewritten to leverage the Iceberg Merge Into operation. Modify and run the application in CDE or DataHub Spark using any of the following CLI commands.
 
-##### Cloudera Data Engineering
+##### Option A: Cloudera Data Engineering
 
 ```
+cde resource create --name spark_observability_hol
+
 cde resource upload --name spark_observability_hol \
   --local-path code/iceberg_merge_original.py
 
 cde job create --name iceberg_merge_original \
   --type spark \
-  --application-file use_case_11b_iceberg_merge.py \
+  --application-file iceberg_merge_original.py \
   --mount-1-resource spark_observability_hol
 
-cde job run --name use_case_11b_iceberg_merge \
+cde job run --name iceberg_merge_original \
   --executor-cores 4 \
   --executor-memory "4g" \
   --arg spark_catalog.default.iceberg_merge_target_table \
@@ -56,28 +58,28 @@ cde job run \
 --arg spark_catalog.default.source_table_pauld
 ```
 
-##### Cloudera DataHub
+##### Option B: Cloudera DataHub
+
+Requirement: the pyspark application must have been uploaded in your HDFS path. You can use Hue to upload via the UI.
 
 ```
 curl -X POST https://go01-obsr-de-gateway.go01-dem.ylcu-atmi.cloudera.site/go01-obsr-de/cdp-proxy-api/livy_for_spark3/batches \
  -H "Content-Type: application/json" \
  -u pauldefusco:pswd! \
  -d '{
-  "file": "/user/pauldefusco/use_case_14_skew_overcaching.py",
-  "name": "CDP-Livy-UseCase-14",
+  "file": "/path/in/hdfs/iceberg_merge_original.py",
+  "name": "iceberg_merge_original_your_username",
   "conf": {
    "spark.dynamicAllocation.enabled": "true",
    "spark.dynamicAllocation.minExecutors": "1",
    "spark.dynamicAllocation.maxExecutors": "20"
   },
-  "driverMemory": "4g",
   "executorMemory": "4g",
-  "executorCores": 2,
-  "numExecutors": 4
+  "executorCores": 4
  }'
 ```
 
-##
+##### Inspect Run in Observability
 
 Navigate to Cloudera Observability and inspect the job runs.
 
@@ -87,17 +89,17 @@ Navigate to Cloudera Observability and inspect the job runs.
 
 ![alt text](img/usecase_11_b_task_skew_3.png)
 
-### Use Case 11c: Iceberg Merge Solution
+Notice the following:
 
-A Spark Application written in Spark 2 that has been migrated to Spark 3 is creating thousands of small files when writing, after applying the bucketing operation as it was applied in Spark 2.
+[...]
 
-```
-cde spark submit code/use_case_11c_iceberg_merge_sol.py \
-  --executor-cores 4 \
-  --executor-memory "4g" \
-  --arg spark_catalog.default.iceberg_merge_target_table \
-  --arg spark_catalog.default.iceberg_merge_source_table
-```
+
+### Lab 2: Apply Bucketing
+
+You can bucket based on ID in order to align the two tables before the join operated by the Merge Into. As before, run the following commands and update the job name and arguments as needed.
+g spark_catalog.default.iceberg_merge_source_table
+
+##### Option A: Cloudera Data Engineering
 
 ```
 cde resource upload --name spark_observability_hol \
@@ -116,3 +118,102 @@ cde job run --name use_case_11c_iceberg_merge_sol \
   --conf spark.dynamicAllocation.minExecutors=1 \
   --conf spark.dynamicAllocation.maxExecutors=20
 ```
+
+##### Option B: Cloudera DataHub
+
+Requirement: the pyspark application must have been uploaded in your HDFS path. You can use Hue to upload via the UI.
+
+```
+curl -X POST https://go01-obsr-de-gateway.go01-dem.ylcu-atmi.cloudera.site/go01-obsr-de/cdp-proxy-api/livy_for_spark3/batches \
+ -H "Content-Type: application/json" \
+ -u pauldefusco:pswd! \
+ -d '{
+  "file": "/user/pauldefusco/use_case_14_skew_overcaching.py",
+  "name": "iceberg_merge_bucketing_your_username",
+  "conf": {
+   "spark.dynamicAllocation.enabled": "true",
+   "spark.dynamicAllocation.minExecutors": "1",
+   "spark.dynamicAllocation.maxExecutors": "20"
+  },
+  "driverMemory": "4g",
+  "executorMemory": "4g",
+  "executorCores": 2,
+  "numExecutors": 4
+ }'
+```
+
+##### Inspect Run in Observability
+
+Navigate to Cloudera Observability and inspect the job runs.
+
+![alt text](img/usecase_11_b_task_skew_1.png)
+
+![alt text](img/usecase_11_b_task_skew_2.png)
+
+![alt text](img/usecase_11_b_task_skew_3.png)
+
+Notice the following:
+
+[...]
+
+
+### Lab 3: Apply Salting
+
+Although you bucketed by ID you still ran into significant task skew. You can use salting to better distribute data across your partitions and resolve this problem.
+
+##### Option A: Cloudera Data Engineering
+
+```
+cde resource upload --name spark_observability_hol \
+  --local-path code/iceberg_merge_tune_2.py
+
+cde job create --name iceberg_merge_tune_2 \
+  --type spark \
+  --application-file iceberg_merge_tune_2.py \
+  --mount-1-resource spark_observability_hol
+
+cde job run --name iceberg_merge_tune_2 \
+  --executor-cores 4 \
+  --executor-memory "4g" \
+  --arg spark_catalog.default.iceberg_merge_target_table \
+  --arg spark_catalog.default.iceberg_merge_source_table \
+  --conf spark.dynamicAllocation.minExecutors=1 \
+  --conf spark.dynamicAllocation.maxExecutors=20
+```
+
+##### Option B: Cloudera DataHub
+
+Requirement: the pyspark application must have been uploaded in your HDFS path. You can use Hue to upload via the UI.
+
+```
+curl -X POST https://go01-obsr-de-gateway.go01-dem.ylcu-atmi.cloudera.site/go01-obsr-de/cdp-proxy-api/livy_for_spark3/batches \
+ -H "Content-Type: application/json" \
+ -u pauldefusco:pswd! \
+ -d '{
+  "file": "/path/in/hdfs/iceberg_merge_tune_2.py",
+  "name": "iceberg_merge_salting_your_username",
+  "conf": {
+   "spark.dynamicAllocation.enabled": "true",
+   "spark.dynamicAllocation.minExecutors": "1",
+   "spark.dynamicAllocation.maxExecutors": "20"
+  },
+  "driverMemory": "4g",
+  "executorMemory": "4g",
+  "executorCores": 2,
+  "numExecutors": 4
+ }'
+```
+
+##### Inspect Run in Observability
+
+Navigate to Cloudera Observability and inspect the job runs.
+
+![alt text](img/usecase_11_b_task_skew_1.png)
+
+![alt text](img/usecase_11_b_task_skew_2.png)
+
+![alt text](img/usecase_11_b_task_skew_3.png)
+
+Notice the following:
+
+[...]
