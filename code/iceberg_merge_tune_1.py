@@ -84,8 +84,7 @@ CREATE TABLE {writeIcebergTableOne} (
     category STRING,
     value1 DOUBLE,
     value2 DOUBLE,
-    event_ts DATE,
-    salt INT
+    event_ts DATE
 )
 USING iceberg
 PARTITIONED BY (bucket(256, id), bucket(16, salt))
@@ -97,8 +96,7 @@ CREATE TABLE {writeIcebergTableTwo} (
     category STRING,
     value1 DOUBLE,
     value2 DOUBLE,
-    event_ts DATE,
-    salt INT
+    event_ts DATE
 )
 USING iceberg
 PARTITIONED BY (bucket(256, id), bucket(16, salt))
