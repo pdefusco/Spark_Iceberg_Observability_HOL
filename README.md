@@ -1,12 +1,18 @@
 # Spark and Iceberg Observability Hands on Lab
 
-## About the Lab
+## About this Lab
 
 ## About Spark, Iceberg and Cloudera Observability
 
 #### Apache Spark
 
 Apache Spark is an open-source, fast, and powerful big data processing framework. It’s designed for large-scale data analytics and supports tasks like data transformation, machine learning, and real-time stream processing. Spark is known for its speed and ease of use compared to traditional systems like Hadoop.
+
+In Cloudera you can run production Spark use cases at enterprise scale with Cloudera Data Engineering or Cloudera DataHub.
+
+**Cloudera Data Engineering (CDE)** is a service within Cloudera that enables teams to build, schedule, and manage data pipelines at scale using Apache Spark. It provides tools for workflow automation, job monitoring, and resource management in a secure, cloud-native environment.
+
+**Cloudera DataHub** is a flexible data platform that allows users to deploy and manage clusters for data processing, analytics, and machine learning. It supports a wide range of workloads and services like Hive, HBase, and Spark, and can run in hybrid or multi-cloud environments.
 
 #### Apache Iceberg
 
