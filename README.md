@@ -229,3 +229,27 @@ Navigate to Cloudera Observability and inspect the job runs.
 Notice the following:
 
 [...]
+
+### Lab 4: Apply Caching
+
+An colleague suggested caching the data to speed up the join.
+
+##### Option A: Cloudera Data Engineering
+
+```
+cde resource upload --name spark_observability_hol \
+  --local-path code/iceberg_merge_caching.py
+
+cde job create --name iceberg_merge_caching \
+  --type spark \
+  --application-file iceberg_merge_caching.py \
+  --mount-1-resource spark_observability_hol
+
+cde job run --name iceberg_merge_caching \
+  --executor-cores 4 \
+  --executor-memory "4g" \
+  --arg spark_catalog.default.iceberg_merge_target_table \
+  --arg spark_catalog.default.iceberg_merge_source_table \
+  --conf spark.dynamicAllocation.minExecutors=1 \
+  --conf spark.dynamicAllocation.maxExecutors=20
+```
