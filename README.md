@@ -6,13 +6,19 @@
 
 #### Apache Spark
 
+Apache Spark is an open-source, fast, and powerful big data processing framework. It’s designed for large-scale data analytics and supports tasks like data transformation, machine learning, and real-time stream processing. Spark is known for its speed and ease of use compared to traditional systems like Hadoop.
+
 #### Apache Iceberg
+
+Apache Iceberg is an open-source table format for large-scale data analytics. It enables reliable, high-performance querying and data management on big data lakes. Iceberg supports features like ACID transactions, schema evolution, and time travel, making it ideal for modern data engineering and analytics workflows.
 
 #### About Cloudera Observability
 
+Cloudera Observability is a monitoring and troubleshooting tool for data pipelines and workloads running on the Cloudera Data Platform (CDP). It provides visibility into system performance, resource usage, and job health, helping data teams optimize performance, detect issues, and ensure efficient operation across hybrid and multi-cloud environments.
+
 #### About Iceberg Merge Into Statement
 
-
+The Iceberg MERGE INTO statement is used to merge data into an Apache Iceberg table based on specified conditions. It allows for inserts, updates, or deletes in a single SQL operation, making it useful for handling slowly changing dimensions or upserting data efficiently. This feature supports ACID transactions**, ensuring consistency and reliability.
 
 ## Lab: Tune Iceberg Merge Into Spark Job
 
