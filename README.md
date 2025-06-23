@@ -61,7 +61,7 @@ cde job run \
 ```
 curl -X POST https://go01-obsr-de-gateway.go01-dem.ylcu-atmi.cloudera.site/go01-obsr-de/cdp-proxy-api/livy_for_spark3/batches \
  -H "Content-Type: application/json" \
- -u pauldefusco:Paolino1987! \
+ -u pauldefusco:pswd! \
  -d '{
   "file": "/user/pauldefusco/use_case_14_skew_overcaching.py",
   "name": "CDP-Livy-UseCase-14",
