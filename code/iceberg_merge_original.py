@@ -50,7 +50,7 @@ print(writeIcebergTableTwo)
 
 # Set up Spark with Iceberg
 spark = SparkSession.builder \
-    .appName("IcebergMergeInto") \
+    .appName("SparkIcebergMergeInto") \
     .getOrCreate()
 
 # Parameters

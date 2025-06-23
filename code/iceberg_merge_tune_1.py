@@ -48,7 +48,7 @@ writeIcebergTableTwo = sys.argv[2]
 
 # Spark setup
 spark = SparkSession.builder \
-    .appName("IcebergMergeInto") \
+    .appName("SparkIcebergMergeInto") \
     .config("spark.sql.adaptive.enabled", "true") \
     .config("spark.sql.adaptive.skewJoin.enabled", "true") \
     .config("spark.sql.adaptive.advisoryPartitionSizeInBytes", 64 * 1024 * 1024) \
