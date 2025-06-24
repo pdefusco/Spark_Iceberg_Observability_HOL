@@ -55,7 +55,7 @@ spark = SparkSession.builder \
     .config("spark.sql.shuffle.partitions", "256") \
     .getOrCreate()
 
-NUM_ROWS = 500_000_000
+NUM_ROWS = 50_000_000_000
 SALT_BUCKETS = 16
 base_ts = datetime.datetime(2020, 1, 1)
 

@@ -54,7 +54,7 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 # Parameters
-NUM_ROWS = 500_000_000
+NUM_ROWS = 50_000_000_000
 base_ts = datetime.datetime(2020, 1, 1)
 
 # Generate Dataset 1 (Target)

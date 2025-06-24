@@ -55,8 +55,8 @@ spark = SparkSession.builder \
     .config("spark.sql.shuffle.partitions", "256") \
     .getOrCreate()
 
-NUM_ROWS = 500_000_000
-SALT_BUCKETS = 16
+NUM_ROWS = 50_000_000_000
+#SALT_BUCKETS = 16
 base_ts = datetime.datetime(2020, 1, 1)
 
 # Generate target DataFrame (df1)
@@ -77,7 +77,7 @@ df2 = spark.range(NUM_ROWS // 2, NUM_ROWS + NUM_ROWS // 2).toDF("id") \
 spark.sql(f"DROP TABLE IF EXISTS {writeIcebergTableOne}")
 spark.sql(f"DROP TABLE IF EXISTS {writeIcebergTableTwo}")
 
-# Create bucketed Iceberg tables on id 
+# Create bucketed Iceberg tables on id
 spark.sql(f"""
 CREATE TABLE {writeIcebergTableOne} (
     id BIGINT,
