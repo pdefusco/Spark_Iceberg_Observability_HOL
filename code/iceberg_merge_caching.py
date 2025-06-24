@@ -65,10 +65,6 @@ df1 = spark.range(0, NUM_ROWS).toDF("id") \
     .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))"))
     #.withColumn("event_time", expr(f"timestamp('{base_ts}') + interval int(id % 50) days"))
 
-# Add Caching Operation
-df1.cache()
-df1.count()
-
 # Generate Dataset 2 (Source)
 df2 = spark.range(NUM_ROWS // 2, NUM_ROWS + NUM_ROWS // 2).toDF("id") \
     .withColumn("category", expr("CASE id % 5 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' WHEN 3 THEN 'D' ELSE 'E' END")) \
@@ -77,6 +73,16 @@ df2 = spark.range(NUM_ROWS // 2, NUM_ROWS + NUM_ROWS // 2).toDF("id") \
     .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))"))
     #.withColumn("event_time", expr(f"timestamp('{base_ts}') + interval id % 50) + 1) days"))
 
+# Generate Dataset 3 (Source)
+df3 = spark.range(NUM_ROWS // 2, NUM_ROWS + NUM_ROWS // 2).toDF("id") \
+    .withColumn("category", expr("CASE id % 5 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' WHEN 3 THEN 'D' ELSE 'E' END")) \
+    .withColumn("value1", (rand() * 1000).cast("double")) \
+    .withColumn("value2", (rand() * 100).cast("double")) \
+    .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))"))
+
+# Step 3: Join large datasets before filtering
+df4 = df2.join(df3, (df2.event_ts == df3.event_ts) & (df2.category == df3.category), "inner")
+df4.cache()
 # Write target table (Iceberg)
 spark.sql("DROP TABLE IF EXISTS {}".format(writeIcebergTableOne))
 df1.writeTo(writeIcebergTableOne).using("iceberg").create()
