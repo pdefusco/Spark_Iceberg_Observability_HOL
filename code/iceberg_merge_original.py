@@ -50,11 +50,11 @@ print(writeIcebergTableTwo)
 
 # Set up Spark with Iceberg
 spark = SparkSession.builder \
-    .appName("SparkIcebergMergeInto") \
+    .appName("MergeIntoSparkApp4X") \
     .getOrCreate()
 
 # Parameters
-NUM_ROWS = 50_000_000_000
+NUM_ROWS = 4_000_000_000
 base_ts = datetime.datetime(2020, 1, 1)
 
 # Generate Dataset 1 (Target)
