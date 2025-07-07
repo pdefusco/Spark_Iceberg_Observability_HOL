@@ -38,7 +38,7 @@ A Spark Application that upserts data into a target table has been rewritten to 
 cde resource create --name spark_observability_hol
 
 cde resource upload --name spark_observability_hol \
-  --local-path code/iceberg_merge_original.py
+  --local-path code/iceberg_merge_baseline.py
 
 cde job create --name iceberg_merge_baseline \
   --type spark \
