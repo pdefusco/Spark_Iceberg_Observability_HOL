@@ -40,24 +40,25 @@ cde resource create --name spark_observability_hol
 cde resource upload --name spark_observability_hol \
   --local-path code/iceberg_merge_original.py
 
-cde job create --name iceberg_merge_original \
+cde job create --name iceberg_merge_baseline \
   --type spark \
-  --application-file iceberg_merge_original.py \
+  --application-file iceberg_merge_baseline.py \
   --mount-1-resource spark_observability_hol
 
-cde job run --name iceberg_merge_original \
+cde job run --name iceberg_merge_baseline \
   --executor-cores 4 \
   --executor-memory "4g" \
-  --arg spark_catalog.default.iceberg_merge_target_table \
-  --arg spark_catalog.default.iceberg_merge_source_table \
+  --arg spark_catalog.default.baseline_target_table \
+  --arg spark_catalog.default.baseline_source_table \
   --conf spark.dynamicAllocation.minExecutors=1 \
-  --conf spark.dynamicAllocation.maxExecutors=20
+  --conf spark.dynamicAllocation.maxExecutors=20 \
+  --conf spark.sql.adaptive.enabled=False
 ```
 
 Before running these modify the job name, source and target table names to reflect your user e.g.
 
 ```
-cde job create iceberg_merge_original_pauld
+cde job create iceberg_merge_baseline_pauld
 [...]
 ```
 
@@ -79,7 +80,7 @@ curl -X POST https://go01-obsr-de-gateway.go01-dem.ylcu-atmi.cloudera.site/go01-
  -H "Content-Type: application/json" \
  -u pauldefusco:pswd! \
  -d '{
-  "file": "/path/in/hdfs/iceberg_merge_original.py",
+  "file": "/path/in/hdfs/iceberg_merge_baseline.py",
   "name": "iceberg_merge_original_your_username",
   "conf": {
    "spark.dynamicAllocation.enabled": "true",
@@ -93,22 +94,18 @@ curl -X POST https://go01-obsr-de-gateway.go01-dem.ylcu-atmi.cloudera.site/go01-
 
 ##### Inspect Run in Observability
 
-Navigate to Cloudera Observability and inspect the job runs.
+Navigate to Cloudera Observability and inspect the job runs. Notice the following feedback:
 
-![alt text](img/usecase_11_b_task_skew_1.png)
+* Partition input data on a different set of partition keys so that the input data is more uniformly distributed.
 
-![alt text](img/usecase_11_b_task_skew_2.png)
+![alt text](img/iceberg_merge_original_1.png)
 
-![alt text](img/usecase_11_b_task_skew_3.png)
-
-Notice the following:
-
-[...]
+![alt text](img/iceberg_merge_original_2.png)
 
 
 ### Lab 2: Apply Bucketing
 
-You can bucket based on ID in order to align the two tables before the join operated by the Merge Into. As before, run the following commands and update the job name and arguments as needed.
+Following the previous recommendation, you can bucket based on ID in order to align the two tables before the join operated by the Merge Into. As before, run the following commands and update the job name and arguments as needed.
 g spark_catalog.default.iceberg_merge_source_table
 
 ##### Option A: Cloudera Data Engineering
@@ -125,8 +122,8 @@ cde job create --name iceberg_merge_tune_1 \
 cde job run --name iceberg_merge_tune_1 \
   --executor-cores 4 \
   --executor-memory "4g" \
-  --arg spark_catalog.default.iceberg_merge_target_table \
-  --arg spark_catalog.default.iceberg_merge_source_table \
+  --arg spark_catalog.default.bucket_target_table \
+  --arg spark_catalog.default.bucket_source_table \
   --conf spark.dynamicAllocation.minExecutors=1 \
   --conf spark.dynamicAllocation.maxExecutors=20
 ```
@@ -156,22 +153,22 @@ curl -X POST https://go01-obsr-de-gateway.go01-dem.ylcu-atmi.cloudera.site/go01-
 
 ##### Inspect Run in Observability
 
-Navigate to Cloudera Observability and inspect the job runs.
+Navigate to Cloudera Observability and inspect the job runs. Notice the feedback:
 
-![alt text](img/usecase_11_b_task_skew_1.png)
+* Shuffle phase had data skew as 3 (out of 59) tasks had abnormal amount of data.
+* If the job contains joins and one of the join tables is small enough to fit in memory, try increasing spark.sql.autoBroadcastJoinThreshold to a value larger than the size of the smaller table. This will increase the likelihood of the Spark engine choosing broadcast join over short merge join, eliminating the shuffle altogether.
+* If the job contains joins and a small set of keys contain a majority of the data then key salting should help distribute the join data more uniformly.
 
-![alt text](img/usecase_11_b_task_skew_2.png)
+![alt text](img/iceberg_merge_tune_1_1.png)
 
-![alt text](img/usecase_11_b_task_skew_3.png)
+![alt text](img/iceberg_merge_tune_1_2.png)
 
-Notice the following:
-
-[...]
+![alt text](img/iceberg_merge_tune_1_3.png)
 
 
 ### Lab 3: Apply Salting
 
-Although you bucketed by ID you still ran into significant task skew. You can use salting to better distribute data across your partitions and resolve this problem.
+Although you bucketed by ID you still ran into significant task skew. Following the previous recommendation, you can use salting to better distribute data across your partitions and resolve this problem.
 
 ##### Option A: Cloudera Data Engineering
 
@@ -187,8 +184,8 @@ cde job create --name iceberg_merge_tune_2 \
 cde job run --name iceberg_merge_tune_2 \
   --executor-cores 4 \
   --executor-memory "4g" \
-  --arg spark_catalog.default.iceberg_merge_target_table \
-  --arg spark_catalog.default.iceberg_merge_source_table \
+  --arg spark_catalog.default.salt_target_table \
+  --arg spark_catalog.default.salt_source_table \
   --conf spark.dynamicAllocation.minExecutors=1 \
   --conf spark.dynamicAllocation.maxExecutors=20
 ```
@@ -220,17 +217,16 @@ curl -X POST https://go01-obsr-de-gateway.go01-dem.ylcu-atmi.cloudera.site/go01-
 
 Navigate to Cloudera Observability and inspect the job runs.
 
-![alt text](img/usecase_11_b_task_skew_1.png)
+![alt text](img/iceberg_merge_tune_1.png)
 
-![alt text](img/usecase_11_b_task_skew_2.png)
-
-![alt text](img/usecase_11_b_task_skew_3.png)
+![alt text](img/iceberg_merge_tune_2.png)
 
 Notice the following:
 
-[...]
+* All warnings have gone away.
 
-### Lab 4: Apply Caching
+
+### Optional Lab 4: Detect Overcaching
 
 An colleague suggested caching the data to speed up the join.
 
