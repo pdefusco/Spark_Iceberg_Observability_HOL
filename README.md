@@ -103,17 +103,17 @@ Requirement: the pyspark application must have been uploaded in your HDFS path. 
 ```
 curl -X POST https://spark-cluster-arm-gateway.pdf-jul2.a465-9q4k.cloudera.site/spark-cluster-arm/cdp-proxy-api/livy_for_spark3/batches \
  -H "Content-Type: application/json" \
- -u pauldefusco:pswd! \
+ -u pauldefusco:pwd! \
  -d '{
   "file": "/user/pauldefusco/iceberg_merge_baseline_skew.py",
-  "args": ["baseline_target_table_1B_DH", "baseline_source_table_1B"],
-  "name": "MergeIntoSparkApp1B_DH",
+  "args": ["baseline_target_table_1B_DH_baseline", "baseline_source_table_1B_DH_baseline"],
+  "name": "MergeIntoSparkApp1B_DH_baseline",
   "conf": {
    "spark.dynamicAllocation.enabled": "true",
    "spark.dynamicAllocation.minExecutors": "1",
    "spark.dynamicAllocation.maxExecutors": "20",
-   "spark.sql.adaptive.enabled", "False",
-   "spark.sql.shuffle.partitions", "200"
+   "spark.sql.adaptive.enabled": "False",
+   "spark.sql.shuffle.partitions": "200"
   },
   "executorMemory": "8g",
   "executorCores": 4
@@ -164,23 +164,22 @@ Requirement: the pyspark application must have been uploaded in your HDFS path. 
 
 ```
 curl -X POST https://spark-cluster-arm-gateway.pdf-jul2.a465-9q4k.cloudera.site/spark-cluster-arm/cdp-proxy-api/livy_for_spark3/batches \
- -H "Content-Type: application/json" \
- -u pauldefusco:pswd! \
- -d '{
-  "file": "/user/pauldefusco/iceberg_merge_tune_1.py",
-  "args": ["baseline_target_table_1B_DH", "baseline_source_table_1B"],
-  "name": "MergeIntoSparkApp1B_DH",
-  "conf": {
-   "spark.dynamicAllocation.enabled": "true",
-   "spark.dynamicAllocation.minExecutors": "1",
-   "spark.dynamicAllocation.maxExecutors": "20"
-   "spark.sql.adaptive.enabled", "False",
-   "spark.sql.shuffle.partitions", "200"
-  },
-  "driverMemory": "4g",
-  "executorMemory": "8g",
-  "executorCores": 2
- }'
+-H "Content-Type: application/json" \
+-u pauldefusco:pwd! \
+-d '{
+ "file": "/user/pauldefusco/iceberg_merge_tune_1.py",
+ "args": ["baseline_target_table_1B_DH_tune1", "baseline_source_table_1B_DH_tune1"],
+ "name": "MergeIntoSparkApp1B_DH_tune1",
+ "conf": {
+  "spark.dynamicAllocation.enabled": "true",
+  "spark.dynamicAllocation.minExecutors": "1",
+  "spark.dynamicAllocation.maxExecutors": "20",
+  "spark.sql.adaptive.enabled": "false",
+  "spark.sql.shuffle.partitions": "200"
+ },
+ "driverMemory": "4g",
+ "executorMemory": "8g"
+}'
 ```
 
 ##### Inspect Run in Observability
@@ -229,22 +228,21 @@ Requirement: the pyspark application must have been uploaded in your HDFS path. 
 
 ```
 curl -X POST https://spark-cluster-arm-gateway.pdf-jul2.a465-9q4k.cloudera.site/spark-cluster-arm/cdp-proxy-api/livy_for_spark3/batches \
- -H "Content-Type: application/json" \
- -u pauldefusco:pswd! \
- -d '{
-  "file": "/user/pauldefusco/iceberg_merge_tune_2.py",
-  "args": ["baseline_target_table_1B_DH", "baseline_source_table_1B"],
-  "name": "MergeIntoSparkApp1B_DH",
-  "conf": {
-   "spark.dynamicAllocation.enabled": "true",
-   "spark.dynamicAllocation.minExecutors": "1",
-   "spark.dynamicAllocation.maxExecutors": "20",
-   "spark.sql.adaptive.enabled", "False",
-   "spark.sql.shuffle.partitions", "200"
-  },
-  "driverMemory": "4g",
-  "executorMemory": "8g",
-  "executorCores": 4
+-H "Content-Type: application/json" \
+-u pauldefusco:pwd! \
+-d '{
+ "file": "/user/pauldefusco/iceberg_merge_tune_2.py",
+ "args": ["baseline_target_table_1B_DH_tune2", "baseline_source_table_1B_DH_tune2"],
+ "name": "MergeIntoSparkApp1B_DH_tune2",
+ "conf": {
+  "spark.dynamicAllocation.enabled": "true",
+  "spark.dynamicAllocation.minExecutors": "1",
+  "spark.dynamicAllocation.maxExecutors": "20",
+  "spark.sql.adaptive.enabled": "false",
+  "spark.sql.shuffle.partitions": "200"
+ },
+ "driverMemory": "4g",
+ "executorMemory": "8g"
 }'
 ```
 
