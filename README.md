@@ -101,18 +101,20 @@ cde job run \
 Requirement: the pyspark application must have been uploaded in your HDFS path. You can use Hue to upload via the UI.
 
 ```
-curl -X POST https://go01-obsr-de-gateway.go01-dem.ylcu-atmi.cloudera.site/go01-obsr-de/cdp-proxy-api/livy_for_spark3/batches \
+curl -X POST https://spark-cluster-arm-gateway.pdf-jul2.a465-9q4k.cloudera.site/spark-cluster-arm/cdp-proxy-api/livy_for_spark3/batches \
  -H "Content-Type: application/json" \
  -u pauldefusco:pswd! \
  -d '{
-  "file": "/path/in/hdfs/iceberg_merge_baseline.py",
-  "name": "iceberg_merge_original_your_username",
+  "file": "/user/pauldefusco/iceberg_merge_baseline_skew.py",
+  "name": "MergeIntoSparkApp1B_DH",
   "conf": {
    "spark.dynamicAllocation.enabled": "true",
    "spark.dynamicAllocation.minExecutors": "1",
-   "spark.dynamicAllocation.maxExecutors": "20"
+   "spark.dynamicAllocation.maxExecutors": "20",
+   "spark.sql.adaptive.enabled", "False",
+   "spark.sql.shuffle.partitions", "200"
   },
-  "executorMemory": "4g",
+  "executorMemory": "8g",
   "executorCores": 4
  }'
 ```
@@ -160,21 +162,22 @@ cde job run --name iceberg_merge_tune_1 \
 Requirement: the pyspark application must have been uploaded in your HDFS path. You can use Hue to upload via the UI.
 
 ```
-curl -X POST https://go01-obsr-de-gateway.go01-dem.ylcu-atmi.cloudera.site/go01-obsr-de/cdp-proxy-api/livy_for_spark3/batches \
+curl -X POST https://spark-cluster-arm-gateway.pdf-jul2.a465-9q4k.cloudera.site/spark-cluster-arm/cdp-proxy-api/livy_for_spark3/batches \
  -H "Content-Type: application/json" \
  -u pauldefusco:pswd! \
  -d '{
   "file": "/user/pauldefusco/iceberg_merge_tune_1.py",
-  "name": "iceberg_merge_bucketing_your_username",
+  "name": "MergeIntoSparkApp1B_DH",
   "conf": {
    "spark.dynamicAllocation.enabled": "true",
    "spark.dynamicAllocation.minExecutors": "1",
    "spark.dynamicAllocation.maxExecutors": "20"
+   "spark.sql.adaptive.enabled", "False",
+   "spark.sql.shuffle.partitions", "200"
   },
   "driverMemory": "4g",
-  "executorMemory": "4g",
-  "executorCores": 2,
-  "numExecutors": 4
+  "executorMemory": "8g",
+  "executorCores": 2
  }'
 ```
 
@@ -223,22 +226,23 @@ cde job run --name iceberg_merge_tune_2 \
 Requirement: the pyspark application must have been uploaded in your HDFS path. You can use Hue to upload via the UI.
 
 ```
-curl -X POST https://go01-obsr-de-gateway.go01-dem.ylcu-atmi.cloudera.site/go01-obsr-de/cdp-proxy-api/livy_for_spark3/batches \
+curl -X POST https://spark-cluster-arm-gateway.pdf-jul2.a465-9q4k.cloudera.site/spark-cluster-arm/cdp-proxy-api/livy_for_spark3/batches \
  -H "Content-Type: application/json" \
  -u pauldefusco:pswd! \
  -d '{
-  "file": "/path/in/hdfs/iceberg_merge_tune_2.py",
-  "name": "iceberg_merge_salting_your_username",
+  "file": "/user/pauldefusco/iceberg_merge_tune_2.py",
+  "name": "MergeIntoSparkApp1B_DH",
   "conf": {
    "spark.dynamicAllocation.enabled": "true",
    "spark.dynamicAllocation.minExecutors": "1",
-   "spark.dynamicAllocation.maxExecutors": "20"
+   "spark.dynamicAllocation.maxExecutors": "20",
+   "spark.sql.adaptive.enabled", "False",
+   "spark.sql.shuffle.partitions", "200"
   },
   "driverMemory": "4g",
-  "executorMemory": "4g",
-  "executorCores": 2,
-  "numExecutors": 4
- }'
+  "executorMemory": "8g",
+  "executorCores": 4
+}'
 ```
 
 ##### Inspect Run in Observability

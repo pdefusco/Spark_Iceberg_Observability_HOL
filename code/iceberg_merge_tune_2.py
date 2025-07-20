@@ -48,7 +48,7 @@ writeIcebergTableTwo = sys.argv[2]
 
 # Spark setup
 spark = SparkSession.builder \
-    .appName("MergeIntoSparkApp1B") \
+    .appName("MergeIntoSparkApp1B_DH") \
     .config("spark.sql.adaptive.advisoryPartitionSizeInBytes", 64 * 1024 * 1024) \
     .config("spark.sql.shuffle.partitions", "256") \
     .getOrCreate()
