@@ -48,6 +48,8 @@ cde job create --name iceberg_merge_baseline \
 cde job run --name iceberg_merge_baseline \
   --executor-cores 4 \
   --executor-memory "8g" \
+  --driver-cores 4 \
+  --driver-memory "8g" \
   --arg spark_catalog.default.baseline_target_table_1B \
   --arg spark_catalog.default.baseline_source_table_1B \
   --conf spark.dynamicAllocation.minExecutors=1 \
@@ -116,7 +118,9 @@ curl -X POST https://spark-cluster-arm-gateway.pdf-jul2.a465-9q4k.cloudera.site/
    "spark.sql.shuffle.partitions": "200"
   },
   "executorMemory": "8g",
-  "executorCores": 4
+  "executorCores": 4,
+  "driverMemory": "8g",
+  "driverCores": 4
  }'
 ```
 
@@ -150,6 +154,8 @@ cde job create --name iceberg_merge_tune_1 \
 cde job run --name iceberg_merge_tune_1 \
   --executor-cores 4 \
   --executor-memory "8g" \
+  --driver-cores 4 \
+  --driver-memory "8g" \
   --arg spark_catalog.default.bucket_target_table_tune1 \
   --arg spark_catalog.default.bucket_source_table_tune1 \
   --conf spark.dynamicAllocation.minExecutors=1 \
@@ -177,8 +183,10 @@ curl -X POST https://spark-cluster-arm-gateway.pdf-jul2.a465-9q4k.cloudera.site/
   "spark.sql.adaptive.enabled": "false",
   "spark.sql.shuffle.partitions": "200"
  },
- "driverMemory": "4g",
- "executorMemory": "8g"
+ "executorMemory": "8g",
+ "executorCores": 4,
+ "driverMemory": "8g",
+ "driverCores": 4
 }'
 ```
 
@@ -215,6 +223,8 @@ cde job create --name iceberg_merge_tune_2 \
 cde job run --name iceberg_merge_tune_2 \
   --executor-cores 4 \
   --executor-memory "8g" \
+  --driver-cores 4 \
+  --driver-memory "8g" \
   --arg spark_catalog.default.salt_target_table_tune2 \
   --arg spark_catalog.default.salt_source_table_tune2 \
   --conf spark.dynamicAllocation.minExecutors=1 \
@@ -241,8 +251,10 @@ curl -X POST https://spark-cluster-arm-gateway.pdf-jul2.a465-9q4k.cloudera.site/
   "spark.sql.adaptive.enabled": "false",
   "spark.sql.shuffle.partitions": "200"
  },
- "driverMemory": "4g",
- "executorMemory": "8g"
+ "executorMemory": "8g",
+ "executorCores": 4,
+ "driverMemory": "8g",
+ "driverCores": 4
 }'
 ```
 
