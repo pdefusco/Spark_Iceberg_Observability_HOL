@@ -73,11 +73,11 @@ df2 = spark.range(0, NUM_ROWS).toDF("id") \
     .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))"))
 
 # Write target table (Iceberg)
-spark.sql("DROP TABLE IF EXISTS {}".format(writeIcebergTableOne))
+spark.sql("DROP TABLE IF EXISTS {} PURGE".format(writeIcebergTableOne))
 df1.writeTo(writeIcebergTableOne).using("iceberg").create()
 
 # Write source table (Iceberg)
-spark.sql("DROP TABLE IF EXISTS {}".format(writeIcebergTableTwo))
+spark.sql("DROP TABLE IF EXISTS {} PURGE".format(writeIcebergTableTwo))
 df2.writeTo(writeIcebergTableTwo).using("iceberg").create()
 
 # Perform UPSERT using Iceberg MERGE INTO

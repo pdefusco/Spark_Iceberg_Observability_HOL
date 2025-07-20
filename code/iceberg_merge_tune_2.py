@@ -74,8 +74,8 @@ df2 = spark.range(NUM_ROWS // 2, NUM_ROWS + NUM_ROWS // 2).toDF("id") \
     .withColumn("salt", expr(f"CAST(rand() * {SALT_BUCKETS} AS INT)"))
 
 # Drop old tables
-spark.sql(f"DROP TABLE IF EXISTS {writeIcebergTableOne}")
-spark.sql(f"DROP TABLE IF EXISTS {writeIcebergTableTwo}")
+spark.sql(f"DROP TABLE IF EXISTS {writeIcebergTableOne} PURGE")
+spark.sql(f"DROP TABLE IF EXISTS {writeIcebergTableTwo} PURGE")
 
 # Create bucketed Iceberg tables on id + salt
 spark.sql(f"""
