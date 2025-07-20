@@ -71,7 +71,9 @@ cde job create --name iceberg_merge_baseline_skew \
 
 cde job run --name iceberg_merge_baseline_skew \
   --executor-cores 4 \
-  --executor-memory "4g" \
+  --executor-memory "8g" \
+  --driver-cores 4 \
+  --driver-memory "8g" \
   --arg spark_catalog.default.baseline_target_table_1B \
   --arg spark_catalog.default.baseline_source_table_1B \
   --conf spark.dynamicAllocation.minExecutors=1 \
