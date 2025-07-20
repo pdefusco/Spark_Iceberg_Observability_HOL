@@ -47,13 +47,34 @@ cde job create --name iceberg_merge_baseline \
 
 cde job run --name iceberg_merge_baseline \
   --executor-cores 4 \
-  --executor-memory "4g" \
-  --arg spark_catalog.default.baseline_target_table \
-  --arg spark_catalog.default.baseline_source_table \
+  --executor-memory "8g" \
+  --arg spark_catalog.default.baseline_target_table_1B \
+  --arg spark_catalog.default.baseline_source_table_1B \
   --conf spark.dynamicAllocation.minExecutors=1 \
   --conf spark.dynamicAllocation.maxExecutors=20 \
-  --conf spark.sql.adaptive.enabled=False
+  --conf spark.sql.adaptive.enabled=False \
+  --conf spark.sql.shuffle.partitions=200
 ```
+
+
+cde resource upload --name spark_observability_hol \
+  --local-path code/iceberg_merge_baseline_skew.py
+
+cde job create --name iceberg_merge_baseline_skew \
+  --type spark \
+  --application-file iceberg_merge_baseline_skew.py \
+  --mount-1-resource spark_observability_hol
+
+cde job run --name iceberg_merge_baseline_skew \
+  --executor-cores 4 \
+  --executor-memory "4g" \
+  --arg spark_catalog.default.baseline_target_table_skew \
+  --arg spark_catalog.default.baseline_source_table_skew \
+  --conf spark.dynamicAllocation.minExecutors=1 \
+  --conf spark.dynamicAllocation.maxExecutors=20
+
+
+
 
 Before running these modify the job name, source and target table names to reflect your user e.g.
 
@@ -121,11 +142,13 @@ cde job create --name iceberg_merge_tune_1 \
 
 cde job run --name iceberg_merge_tune_1 \
   --executor-cores 4 \
-  --executor-memory "4g" \
+  --executor-memory "8g" \
   --arg spark_catalog.default.bucket_target_table \
   --arg spark_catalog.default.bucket_source_table \
   --conf spark.dynamicAllocation.minExecutors=1 \
-  --conf spark.dynamicAllocation.maxExecutors=20
+  --conf spark.dynamicAllocation.maxExecutors=20 \
+  --conf spark.sql.adaptive.enabled=False \
+  --conf spark.sql.shuffle.partitions=200
 ```
 
 ##### Option B: Cloudera DataHub
@@ -183,11 +206,12 @@ cde job create --name iceberg_merge_tune_2 \
 
 cde job run --name iceberg_merge_tune_2 \
   --executor-cores 4 \
-  --executor-memory "4g" \
+  --executor-memory "8g" \
   --arg spark_catalog.default.salt_target_table \
   --arg spark_catalog.default.salt_source_table \
   --conf spark.dynamicAllocation.minExecutors=1 \
-  --conf spark.dynamicAllocation.maxExecutors=20
+  --conf spark.dynamicAllocation.maxExecutors=20 \
+  --conf spark.sql.shuffle.partitions=200
 ```
 
 ##### Option B: Cloudera DataHub
@@ -247,5 +271,7 @@ cde job run --name iceberg_merge_caching \
   --arg spark_catalog.default.iceberg_merge_target_table \
   --arg spark_catalog.default.iceberg_merge_source_table \
   --conf spark.dynamicAllocation.minExecutors=1 \
-  --conf spark.dynamicAllocation.maxExecutors=20
+  --conf spark.dynamicAllocation.maxExecutors=20 \
+  --conf spark.sql.adaptive.enabled=False \
+  --conf spark.sql.shuffle.partitions=200
 ```

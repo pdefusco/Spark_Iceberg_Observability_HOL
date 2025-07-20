@@ -38,7 +38,7 @@
 #***************************************************************************/
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, rand, expr, lit, to_timestamp
+from pyspark.sql.functions import col, rand, expr, lit, to_timestamp, when
 import datetime
 import sys
 
@@ -50,28 +50,27 @@ print(writeIcebergTableTwo)
 
 # Set up Spark with Iceberg
 spark = SparkSession.builder \
-    .appName("MergeIntoSparkApp1B") \
+    .appName("MergeIntoSparkApp4X") \
     .getOrCreate()
 
 # Parameters
-NUM_ROWS = 1_000_000_000
+NUM_ROWS = 4_000_000_000
 base_ts = datetime.datetime(2020, 1, 1)
 
-# Generate Dataset 1 (Target)
-df1 = spark.range(0, NUM_ROWS).toDF("id") \
+# Skewed df1 (target): many rows with id=42
+df1 = spark.range(NUM_ROWS).toDF("id") \
+    .withColumn("id", when(rand() < 0.95, lit(42)).otherwise(col("id"))) \
     .withColumn("category", expr("CASE id % 5 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' WHEN 3 THEN 'D' ELSE 'E' END")) \
     .withColumn("value1", (rand() * 1000).cast("double")) \
     .withColumn("value2", (rand() * 100).cast("double")) \
     .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))"))
-    #.withColumn("event_time", expr(f"timestamp('{base_ts}') + interval int(id % 50) days"))
 
-# Generate Dataset 2 (Source)
-df2 = spark.range(NUM_ROWS // 2, NUM_ROWS + NUM_ROWS // 2).toDF("id") \
+# Source df2 (no skew, unique ids)
+df2 = spark.range(0, NUM_ROWS).toDF("id") \
     .withColumn("category", expr("CASE id % 5 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' WHEN 3 THEN 'D' ELSE 'E' END")) \
     .withColumn("value1", (rand() * 1000).cast("double")) \
     .withColumn("value2", (rand() * 100).cast("double")) \
     .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))"))
-    #.withColumn("event_time", expr(f"timestamp('{base_ts}') + interval id % 50) + 1) days"))
 
 # Write target table (Iceberg)
 spark.sql("DROP TABLE IF EXISTS {}".format(writeIcebergTableOne))

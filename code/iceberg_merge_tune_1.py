@@ -48,14 +48,15 @@ writeIcebergTableTwo = sys.argv[2]
 
 # Spark setup
 spark = SparkSession.builder \
-    .appName("MergeIntoSparkApp4X") \
-    .config("spark.sql.adaptive.enabled", "true") \
-    .config("spark.sql.adaptive.skewJoin.enabled", "true") \
+    .appName("MergeIntoSparkApp1B") \
     .config("spark.sql.adaptive.advisoryPartitionSizeInBytes", 64 * 1024 * 1024) \
     .config("spark.sql.shuffle.partitions", "256") \
     .getOrCreate()
 
-NUM_ROWS = 4_000_000_000
+#.config("spark.sql.adaptive.enabled", "true") \
+#.config("spark.sql.adaptive.skewJoin.enabled", "true") \
+
+NUM_ROWS = 1_000_000_000
 #SALT_BUCKETS = 16
 base_ts = datetime.datetime(2020, 1, 1)
 
