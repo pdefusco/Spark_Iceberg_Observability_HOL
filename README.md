@@ -147,8 +147,8 @@ cde job create --name iceberg_merge_tune_1 \
 cde job run --name iceberg_merge_tune_1 \
   --executor-cores 4 \
   --executor-memory "8g" \
-  --arg spark_catalog.default.bucket_target_table \
-  --arg spark_catalog.default.bucket_source_table \
+  --arg spark_catalog.default.bucket_target_table_tune1 \
+  --arg spark_catalog.default.bucket_source_table_tune1 \
   --conf spark.dynamicAllocation.minExecutors=1 \
   --conf spark.dynamicAllocation.maxExecutors=20 \
   --conf spark.sql.adaptive.enabled=False \
@@ -211,8 +211,8 @@ cde job create --name iceberg_merge_tune_2 \
 cde job run --name iceberg_merge_tune_2 \
   --executor-cores 4 \
   --executor-memory "8g" \
-  --arg spark_catalog.default.salt_target_table \
-  --arg spark_catalog.default.salt_source_table \
+  --arg spark_catalog.default.salt_target_table_tune2 \
+  --arg spark_catalog.default.salt_source_table_tune2 \
   --conf spark.dynamicAllocation.minExecutors=1 \
   --conf spark.dynamicAllocation.maxExecutors=20 \
   --conf spark.sql.shuffle.partitions=200
