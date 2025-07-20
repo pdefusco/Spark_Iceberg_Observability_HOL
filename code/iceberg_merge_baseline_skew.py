@@ -50,11 +50,11 @@ print(writeIcebergTableTwo)
 
 # Set up Spark with Iceberg
 spark = SparkSession.builder \
-    .appName("MergeIntoSparkApp4X") \
+    .appName("MergeIntoSparkApp1B") \
     .getOrCreate()
 
 # Parameters
-NUM_ROWS = 4_000_000_000
+NUM_ROWS = 1_000_000_000
 base_ts = datetime.datetime(2020, 1, 1)
 
 # Skewed df1 (target): many rows with id=42

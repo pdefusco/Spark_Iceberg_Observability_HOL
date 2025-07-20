@@ -56,7 +56,9 @@ cde job run --name iceberg_merge_baseline \
   --conf spark.sql.shuffle.partitions=200
 ```
 
+Higher degree of skew:
 
+```
 cde resource upload --name spark_observability_hol \
   --local-path code/iceberg_merge_baseline_skew.py
 
@@ -68,11 +70,13 @@ cde job create --name iceberg_merge_baseline_skew \
 cde job run --name iceberg_merge_baseline_skew \
   --executor-cores 4 \
   --executor-memory "4g" \
-  --arg spark_catalog.default.baseline_target_table_skew \
-  --arg spark_catalog.default.baseline_source_table_skew \
+  --arg spark_catalog.default.baseline_target_table_1B \
+  --arg spark_catalog.default.baseline_source_table_1B \
   --conf spark.dynamicAllocation.minExecutors=1 \
-  --conf spark.dynamicAllocation.maxExecutors=20
-
+  --conf spark.dynamicAllocation.maxExecutors=20 \
+  --conf spark.sql.adaptive.enabled=False \
+  --conf spark.sql.shuffle.partitions=200
+```
 
 
 
