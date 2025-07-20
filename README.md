@@ -106,6 +106,7 @@ curl -X POST https://spark-cluster-arm-gateway.pdf-jul2.a465-9q4k.cloudera.site/
  -u pauldefusco:pswd! \
  -d '{
   "file": "/user/pauldefusco/iceberg_merge_baseline_skew.py",
+  "args": ["baseline_target_table_1B_DH", "baseline_source_table_1B"],
   "name": "MergeIntoSparkApp1B_DH",
   "conf": {
    "spark.dynamicAllocation.enabled": "true",
@@ -167,6 +168,7 @@ curl -X POST https://spark-cluster-arm-gateway.pdf-jul2.a465-9q4k.cloudera.site/
  -u pauldefusco:pswd! \
  -d '{
   "file": "/user/pauldefusco/iceberg_merge_tune_1.py",
+  "args": ["baseline_target_table_1B_DH", "baseline_source_table_1B"],
   "name": "MergeIntoSparkApp1B_DH",
   "conf": {
    "spark.dynamicAllocation.enabled": "true",
@@ -231,6 +233,7 @@ curl -X POST https://spark-cluster-arm-gateway.pdf-jul2.a465-9q4k.cloudera.site/
  -u pauldefusco:pswd! \
  -d '{
   "file": "/user/pauldefusco/iceberg_merge_tune_2.py",
+  "args": ["baseline_target_table_1B_DH", "baseline_source_table_1B"],
   "name": "MergeIntoSparkApp1B_DH",
   "conf": {
    "spark.dynamicAllocation.enabled": "true",
