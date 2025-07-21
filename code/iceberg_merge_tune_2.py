@@ -57,21 +57,20 @@ NUM_ROWS = 1_000_000_000
 SALT_BUCKETS = 16
 base_ts = datetime.datetime(2020, 1, 1)
 
-# Generate target DataFrame (df1)
-df1 = spark.range(0, NUM_ROWS).toDF("id") \
+# Skewed df1 (target): many rows with id=42
+df1 = spark.range(NUM_ROWS).toDF("id") \
+    .withColumn("id", when(rand() < 0.95, lit(42)).otherwise(col("id"))) \
     .withColumn("category", expr("CASE id % 5 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' WHEN 3 THEN 'D' ELSE 'E' END")) \
     .withColumn("value1", (rand() * 1000).cast("double")) \
     .withColumn("value2", (rand() * 100).cast("double")) \
-    .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))")) \
-    .withColumn("salt", expr(f"id % {SALT_BUCKETS}"))
+    .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))"))
 
-# Generate source DataFrame (df2) with randomized salt
-df2 = spark.range(NUM_ROWS // 2, NUM_ROWS + NUM_ROWS // 2).toDF("id") \
+# Source df2 (no skew, unique ids)
+df2 = spark.range(0, NUM_ROWS).toDF("id") \
     .withColumn("category", expr("CASE id % 5 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' WHEN 3 THEN 'D' ELSE 'E' END")) \
     .withColumn("value1", (rand() * 1000).cast("double")) \
     .withColumn("value2", (rand() * 100).cast("double")) \
-    .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))")) \
-    .withColumn("salt", expr(f"CAST(rand() * {SALT_BUCKETS} AS INT)"))
+    .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))"))
 
 # Drop old tables
 spark.sql(f"DROP TABLE IF EXISTS {writeIcebergTableOne} PURGE")
