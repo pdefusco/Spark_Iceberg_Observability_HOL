@@ -87,22 +87,8 @@ when_expr = when_expr.otherwise(col("id"))
 
 base_ts = datetime.datetime(2020, 1, 1)
 
-# 5. Generate the DataFrame with skewed keys
-df1 = spark.range(row_count).toDF("id") \
-    .withColumn("skewed_id", when_expr) \
-    .withColumn("category", expr("CASE id % 5 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' WHEN 3 THEN 'D' ELSE 'E' END")) \
-    .withColumn("value1", (rand() * 1000).cast("double")) \
-    .withColumn("value2", (rand() * 100).cast("double")) \
-    .withColumn("value3", (rand() * 1000).cast("double")) \
-    .withColumn("value4", (rand() * 100).cast("double")) \
-    .withColumn("value5", (rand() * 1000).cast("double")) \
-    .withColumn("value6", (rand() * 100).cast("double")) \
-    .withColumn("value7", (rand() * 1000).cast("double")) \
-    .withColumn("value8", (rand() * 100).cast("double")) \
-    .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))"))
-
 # Source df2 (no skew, unique ids)
-df2 = spark.range(0, NUM_ROWS).toDF("id") \
+df2 = spark.range(0, row_count).toDF("id") \
     .withColumn("category", expr("CASE id % 5 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' WHEN 3 THEN 'D' ELSE 'E' END")) \
     .withColumn("value1", (rand() * 1000).cast("double")) \
     .withColumn("value2", (rand() * 100).cast("double")) \
@@ -121,6 +107,21 @@ df2 = spark.range(0, NUM_ROWS).toDF("id") \
 table_exists = spark._jsparkSession.catalog().tableExists(writeIcebergTableOne)
 
 if not table_exists:
+
+    # Generate the DataFrame with skewed keys
+    df1 = spark.range(row_count).toDF("id") \
+        .withColumn("skewed_id", when_expr) \
+        .withColumn("category", expr("CASE id % 5 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' WHEN 3 THEN 'D' ELSE 'E' END")) \
+        .withColumn("value1", (rand() * 1000).cast("double")) \
+        .withColumn("value2", (rand() * 100).cast("double")) \
+        .withColumn("value3", (rand() * 1000).cast("double")) \
+        .withColumn("value4", (rand() * 100).cast("double")) \
+        .withColumn("value5", (rand() * 1000).cast("double")) \
+        .withColumn("value6", (rand() * 100).cast("double")) \
+        .withColumn("value7", (rand() * 1000).cast("double")) \
+        .withColumn("value8", (rand() * 100).cast("double")) \
+        .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))"))
+
     print(f"Creating table {writeIcebergTableOne} for the first time.")
     df1.writeTo(writeIcebergTableOne).using("iceberg").create()
 else:
