@@ -336,5 +336,5 @@ cde job create \
   --type airflow \
   --name dynamic-incremental-orch \
   --dag-file airflow_orch.py \
-  --airflow-file-mount-1-resource spark_observability_hol
+  --mount-1-resource spark_observability_hol
 ```
