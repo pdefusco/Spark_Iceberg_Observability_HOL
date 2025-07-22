@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 print("Using DAG Name: {}".format(dag_name))
 
 default_args = {
-    'owner': username,
+    'owner': 'pauldefusco',
     'depends_on_past': False,
     'start_date': datetime(2024, 5, 21)
 }
