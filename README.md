@@ -312,7 +312,7 @@ cde resource upload \
 cde job create \
   --name iceberg_merge_dynamic_incremental \
   --type spark \
-  --application-file iceberg_merge_skew_multikey_dynamic_incremental \
+  --application-file iceberg_merge_skew_multikey_dynamic_incremental.py \
   --mount-1-resource spark_observability_hol
 
 cde job run \
