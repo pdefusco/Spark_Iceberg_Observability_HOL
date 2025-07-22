@@ -305,6 +305,14 @@ cde job run --name iceberg_merge_caching \
 This will only run in CDE.
 
 ```
+cde resource create \
+  --name numpy \
+  --type python-env
+
+cde resource upload \
+  --name numpy \
+  --local-path requirements.txt
+
 cde resource upload \
   --name spark_observability_hol \
   --local-path code/iceberg_merge_skew_multikey_dynamic_incremental.py
