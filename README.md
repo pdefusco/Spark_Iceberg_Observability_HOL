@@ -298,3 +298,43 @@ cde job run --name iceberg_merge_caching \
   --conf spark.sql.adaptive.enabled=False \
   --conf spark.sql.shuffle.partitions=200
 ```
+
+
+### Lab 5: CDE Iceberg Incremental Merge Into with Dynamic Skew
+
+This will only run in CDE.
+
+```
+cde resource upload \
+  --name spark_observability_hol \
+  --local-path code/iceberg_merge_skew_multikey_dynamic_incremental.py
+
+cde job create \
+  --name iceberg_merge_dynamic_incremental \
+  --type spark \
+  --application-file iceberg_merge_skew_multikey_dynamic_incremental \
+  --mount-1-resource spark_observability_hol
+
+cde job run \
+  --name iceberg_merge_dynamic_incremental
+  --executor-cores 4 \
+  --executor-memory "4g" \
+  --arg spark_catalog.default.dynamic_incremental_target_table \
+  --arg spark_catalog.default.dynamic_incremental_source_table \
+  --conf spark.dynamicAllocation.minExecutors=1 \
+  --conf spark.dynamicAllocation.maxExecutors=20 \
+  --conf spark.sql.adaptive.enabled=False \
+  --conf spark.sql.shuffle.partitions=200
+```
+
+```
+cde resource upload \
+  --name spark_observability_hol \
+  --local-path code/airflow_orch.py
+
+cde job create \
+  --type airflow \
+  --name dynamic-incremental-orch \
+  --dag-file airflow_orch.py \
+  --airflow-file-mount-1-resource spark_observability_hol
+```

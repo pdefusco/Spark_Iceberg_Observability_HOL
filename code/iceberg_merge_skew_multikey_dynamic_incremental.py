@@ -51,7 +51,6 @@ print("sys.path:", sys.path)
 import numpy as np
 print("Numpy version:", np.__version__)
 
-
 print("Write Tables:")
 writeIcebergTableOne = sys.argv[1]
 writeIcebergTableTwo = sys.argv[2]
@@ -94,6 +93,12 @@ df1 = spark.range(row_count).toDF("id") \
     .withColumn("category", expr("CASE id % 5 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' WHEN 3 THEN 'D' ELSE 'E' END")) \
     .withColumn("value1", (rand() * 1000).cast("double")) \
     .withColumn("value2", (rand() * 100).cast("double")) \
+    .withColumn("value3", (rand() * 1000).cast("double")) \
+    .withColumn("value4", (rand() * 100).cast("double")) \
+    .withColumn("value5", (rand() * 1000).cast("double")) \
+    .withColumn("value6", (rand() * 100).cast("double")) \
+    .withColumn("value7", (rand() * 1000).cast("double")) \
+    .withColumn("value8", (rand() * 100).cast("double")) \
     .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))"))
 
 # Source df2 (no skew, unique ids)
@@ -101,11 +106,25 @@ df2 = spark.range(0, NUM_ROWS).toDF("id") \
     .withColumn("category", expr("CASE id % 5 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' WHEN 3 THEN 'D' ELSE 'E' END")) \
     .withColumn("value1", (rand() * 1000).cast("double")) \
     .withColumn("value2", (rand() * 100).cast("double")) \
+    .withColumn("value3", (rand() * 1000).cast("double")) \
+    .withColumn("value4", (rand() * 100).cast("double")) \
+    .withColumn("value5", (rand() * 1000).cast("double")) \
+    .withColumn("value6", (rand() * 100).cast("double")) \
+    .withColumn("value7", (rand() * 1000).cast("double")) \
+    .withColumn("value8", (rand() * 100).cast("double")) \
     .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))"))
 
 # Write target table (Iceberg)
 #spark.sql("DROP TABLE IF EXISTS {} PURGE".format(writeIcebergTableOne))
-df1.writeTo(writeIcebergTableOne).using("iceberg").create()
+
+# Check if first table exists before creating
+table_exists = spark._jsparkSession.catalog().tableExists(writeIcebergTableOne)
+
+if not table_exists:
+    print(f"Creating table {writeIcebergTableOne} for the first time.")
+    df1.writeTo(writeIcebergTableOne).using("iceberg").create()
+else:
+    print(f"Table {writeIcebergTableOne} already exists. Skipping creation.")
 
 # Write source table (Iceberg)
 spark.sql("DROP TABLE IF EXISTS {} PURGE".format(writeIcebergTableTwo))
