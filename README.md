@@ -316,6 +316,7 @@ cde job create \
   --name iceberg_merge_dynamic_incremental \
   --type spark \
   --application-file iceberg_merge_skew_multikey_dynamic_incremental.py \
+  --python-env-resource-name numpy \
   --mount-1-resource spark_observability_hol \
   --executor-cores 4 \
   --executor-memory "4g" \
