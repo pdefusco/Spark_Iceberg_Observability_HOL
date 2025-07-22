@@ -313,10 +313,7 @@ cde job create \
   --name iceberg_merge_dynamic_incremental \
   --type spark \
   --application-file iceberg_merge_skew_multikey_dynamic_incremental.py \
-  --mount-1-resource spark_observability_hol
-
-cde job run \
-  --name iceberg_merge_dynamic_incremental
+  --mount-1-resource spark_observability_hol \
   --executor-cores 4 \
   --executor-memory "4g" \
   --arg spark_catalog.default.dynamic_incremental_target_table \
