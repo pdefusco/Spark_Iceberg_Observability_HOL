@@ -327,7 +327,9 @@ cde job create \
   --python-env-resource-name numpy \
   --mount-1-resource spark_observability_hol \
   --executor-cores 4 \
-  --executor-memory "4g" \
+  --executor-memory "8g" \
+  --driver-cores 4 \
+  --driver-memory "4g"
   --arg spark_catalog.default.dynamic_incremental_target_table \
   --arg spark_catalog.default.dynamic_incremental_source_table \
   --conf spark.dynamicAllocation.minExecutors=1 \
