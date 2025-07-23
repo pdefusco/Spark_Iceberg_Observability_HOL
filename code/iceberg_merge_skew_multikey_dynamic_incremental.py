@@ -38,22 +38,21 @@
 #***************************************************************************/
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, rand, expr, lit, to_timestamp, when
 import datetime
 import sys
+import numpy as np
 import random
 
-import sys
+from dbldatagen import DataGenerator
+
 print("PYTHON EXECUTABLE:", sys.executable)
-
 print("sys.path:", sys.path)
-
-import numpy as np
 print("Numpy version:", np.__version__)
 
-print("Write Tables:")
 writeIcebergTableOne = sys.argv[1]
 writeIcebergTableTwo = sys.argv[2]
+
+print("Write Tables:")
 print(writeIcebergTableOne)
 print(writeIcebergTableTwo)
 
@@ -62,85 +61,82 @@ spark = SparkSession.builder \
     .appName("MultiKeySkewDynamic") \
     .getOrCreate()
 
-# 2. Generate row count from normal distribution (mean = 5B, std = 1B)
-row_count = int(np.random.normal(loc=5_000_000_000, scale=1_000_000_000))
-row_count = max(row_count, 100_000_000)  # Ensure a minimum size
+# 2. Generate row count from normal distribution
+row_count = int(np.random.normal(loc=5_000_000, scale=1_000_000))  # 5M for safe testing
+row_count = max(row_count, 1_000_000)  # Ensure a reasonable floor
 
 print(f"Generating {row_count:,} rows")
 
-# 3. Dynamically choose skewed keys and assign skew probabilities
-num_skew_keys = random.randint(5, 10)  # Between 5 and 10 skewed keys
-skew_keys = random.sample(range(10_000, 1_000_000), num_skew_keys)  # Unique key values
-skew_probs_raw = np.random.dirichlet(np.ones(num_skew_keys), size=1)[0]  # Probabilities sum to 1
-skew_probs = [round(float(p), 3) for p in skew_probs_raw]
+# 3. Dynamically choose skewed keys and probabilities
+num_skew_keys = random.randint(5, 10)
+skew_keys = random.sample(range(10_000, 1_000_000), num_skew_keys)
+skew_probs = np.random.dirichlet(np.ones(num_skew_keys), size=1)[0]
 
-# Convert cumulative probabilities for use in when()
-cumulative_probs = np.cumsum(skew_probs)
-
-# 4. Build a Spark expression to randomly assign skewed keys
-when_expr = when(rand() < cumulative_probs[0], lit(skew_keys[0]))
-for i in range(1, len(skew_keys)):
-    when_expr = when_expr.when(rand() < cumulative_probs[i], lit(skew_keys[i]))
-
-# For remaining data, use original row ID (non-skewed)
-when_expr = when_expr.otherwise(col("id"))
+# Create weighted distribution for skewed_id
+skew_key_distribution = [(str(skew_keys[i]), float(round(skew_probs[i], 3))) for i in range(num_skew_keys)]
+print(f"Skew key distribution: {skew_key_distribution}")
 
 base_ts = datetime.datetime(2020, 1, 1)
 
-# Source df2 (no skew, unique ids)
-df2 = spark.range(0, row_count).toDF("id") \
-    .withColumn("category", expr("CASE id % 5 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' WHEN 3 THEN 'D' ELSE 'E' END")) \
-    .withColumn("value1", (rand() * 1000).cast("double")) \
-    .withColumn("value2", (rand() * 100).cast("double")) \
-    .withColumn("value3", (rand() * 1000).cast("double")) \
-    .withColumn("value4", (rand() * 100).cast("double")) \
-    .withColumn("value5", (rand() * 1000).cast("double")) \
-    .withColumn("value6", (rand() * 100).cast("double")) \
-    .withColumn("value7", (rand() * 1000).cast("double")) \
-    .withColumn("value8", (rand() * 100).cast("double")) \
-    .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))"))
+# 4. Create df2 (non-skewed, full size)
+df2_spec = (DataGenerator(spark, name="df2_gen", rows=row_count, partitions=20)
+    .withIdOutput()
+    .withColumn("category", "string", values=["A", "B", "C", "D", "E"], random=True)
+    .withColumn("value1", "float", minValue=0, maxValue=1000, random=True)
+    .withColumn("value2", "float", minValue=0, maxValue=100, random=True)
+    .withColumn("value3", "float", minValue=0, maxValue=1000, random=True)
+    .withColumn("value4", "float", minValue=0, maxValue=100, random=True)
+    .withColumn("value5", "float", minValue=0, maxValue=1000, random=True)
+    .withColumn("value6", "float", minValue=0, maxValue=100, random=True)
+    .withColumn("value7", "float", minValue=0, maxValue=1000, random=True)
+    .withColumn("value8", "float", minValue=0, maxValue=100, random=True)
+    .withColumn("event_ts", "timestamp", begin="2020-01-01", interval="1 day", random=True)
+)
 
-# Write target table (Iceberg)
-#spark.sql("DROP TABLE IF EXISTS {} PURGE".format(writeIcebergTableOne))
+df2 = df2_spec.build()
 
-# Check if first table exists before creating
+# 5. Check if target table exists
 table_exists = spark._jsparkSession.catalog().tableExists(writeIcebergTableOne)
 
 if not table_exists:
-
-    # Generate the DataFrame with skewed keys
-    df1 = spark.range(row_count).toDF("id") \
-        .withColumn("skewed_id", when_expr) \
-        .withColumn("category", expr("CASE id % 5 WHEN 0 THEN 'A' WHEN 1 THEN 'B' WHEN 2 THEN 'C' WHEN 3 THEN 'D' ELSE 'E' END")) \
-        .withColumn("value1", (rand() * 1000).cast("double")) \
-        .withColumn("value2", (rand() * 100).cast("double")) \
-        .withColumn("value3", (rand() * 1000).cast("double")) \
-        .withColumn("value4", (rand() * 100).cast("double")) \
-        .withColumn("value5", (rand() * 1000).cast("double")) \
-        .withColumn("value6", (rand() * 100).cast("double")) \
-        .withColumn("value7", (rand() * 1000).cast("double")) \
-        .withColumn("value8", (rand() * 100).cast("double")) \
-        .withColumn("event_ts", expr(f"date_add(to_date('{base_ts}'), int(id % 30))"))
-
     print(f"Creating table {writeIcebergTableOne} for the first time.")
+
+    # Create df1 with skewed key
+    df1_spec = (DataGenerator(spark, name="df1_gen", rows=row_count, partitions=20)
+        .withIdOutput()
+        .withColumn("skewed_id", "string", values=skew_key_distribution)
+        .withColumn("category", "string", values=["A", "B", "C", "D", "E"], random=True)
+        .withColumn("value1", "float", minValue=0, maxValue=1000, random=True)
+        .withColumn("value2", "float", minValue=0, maxValue=100, random=True)
+        .withColumn("value3", "float", minValue=0, maxValue=1000, random=True)
+        .withColumn("value4", "float", minValue=0, maxValue=100, random=True)
+        .withColumn("value5", "float", minValue=0, maxValue=1000, random=True)
+        .withColumn("value6", "float", minValue=0, maxValue=100, random=True)
+        .withColumn("value7", "float", minValue=0, maxValue=1000, random=True)
+        .withColumn("value8", "float", minValue=0, maxValue=100, random=True)
+        .withColumn("event_ts", "timestamp", begin="2020-01-01", interval="1 day", random=True)
+    )
+
+    df1 = df1_spec.build()
     df1.writeTo(writeIcebergTableOne).using("iceberg").create()
+
 else:
     print(f"Table {writeIcebergTableOne} already exists. Skipping creation.")
 
-# Write source table (Iceberg)
-spark.sql("DROP TABLE IF EXISTS {} PURGE".format(writeIcebergTableTwo))
+# 6. Write df2 (source table)
+spark.sql(f"DROP TABLE IF EXISTS {writeIcebergTableTwo} PURGE")
 df2.writeTo(writeIcebergTableTwo).using("iceberg").create()
 
-# Perform UPSERT using Iceberg MERGE INTO
-spark.sql("""
-    MERGE INTO {0} AS target
-    USING {1} AS source
+# 7. Merge using Iceberg
+spark.sql(f"""
+    MERGE INTO {writeIcebergTableOne} AS target
+    USING {writeIcebergTableTwo} AS source
     ON target.id = source.id
     WHEN MATCHED AND source.event_ts > target.event_ts THEN
       UPDATE SET *
     WHEN NOT MATCHED THEN
       INSERT *
-""".format(writeIcebergTableOne, writeIcebergTableTwo))
+""")
 
 print("Iceberg UPSERT completed using MERGE INTO")
 
