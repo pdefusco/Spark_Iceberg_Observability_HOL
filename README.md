@@ -305,7 +305,8 @@ cde job run --name iceberg_merge_caching \
 This will only run in CDE.
 
 ```
-cde resource create --name spark_observability_hol
+cde resource create \
+  --name spark_observability_hol
 
 cde resource create \
   --name numpy \
@@ -331,7 +332,7 @@ cde job create \
   --executor-cores 4 \
   --executor-memory "8g" \
   --driver-cores 4 \
-  --driver-memory "4g"
+  --driver-memory "4g" \
   --arg spark_catalog.default.dynamic_incremental_target_table_large \
   --arg spark_catalog.default.dynamic_incremental_source_table_large \
   --conf spark.dynamicAllocation.minExecutors=1 \
