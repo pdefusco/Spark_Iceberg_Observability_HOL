@@ -67,29 +67,43 @@ row_count = max(row_count, 1_000_000)  # Ensure a reasonable floor
 
 print(f"Generating {row_count:,} rows")
 
-# 3. Dynamically choose skewed keys and probabilities
-num_skew_keys = random.randint(5, 10)
-skew_keys = random.sample(range(10_000, 1_000_000), num_skew_keys)
-skew_probs = np.random.dirichlet(np.ones(num_skew_keys), size=1)[0]
+# Dynamically choose skewed keys and probabilities for DF1
+num_skew_keys_1 = random.randint(5, 10)
+skew_keys_1 = random.sample(range(10_000, 1_000_000), num_skew_keys_1)
+skew_probs_1 = np.random.dirichlet(np.ones(num_skew_keys_1), size=1)[0]
+skew_values_1 = [str(k) for k in skew_keys_1]
+skew_weights_1 = [float(p) for p in skew_probs_1]
 
 # Create weighted distribution for skewed_id
-skew_key_distribution = [(str(skew_keys[i]), float(round(skew_probs[i], 3))) for i in range(num_skew_keys)]
-print(f"Skew key distribution: {skew_key_distribution}")
+#skew_key_dist_1 = [(str(skew_keys_1[i]), float(skew_probs_1[i])) for i in range(num_skew_keys_1)]
+#print(f"Skew key distribution: {skew_key_dist_1}")
+
+# Dynamically choose skewed keys and probabilities for DF1
+num_skew_keys_2 = random.randint(5, 10)
+skew_keys_2 = random.sample(range(10_000, 1_000_000), num_skew_keys_2)
+skew_probs_2 = np.random.dirichlet(np.ones(num_skew_keys_2), size=1)[0]
+skew_values_2 = [str(k) for k in skew_keys_2]
+skew_weights_2 = [float(p) for p in skew_probs_2]
+
+# Create weighted distribution for skewed_id
+#skew_key_dist_2 = [(str(skew_keys_2[i]), float(skew_probs_2[i])) for i in range(num_skew_keys_2)]
+#print(f"Skew key distribution: {skew_key_dist_2}")
 
 base_ts = datetime.datetime(2020, 1, 1)
 
 # 4. Create df2 (non-skewed, full size)
-df2_spec = (DataGenerator(spark, name="df2_gen", rows=row_count, partitions=20)
+df2_spec = (DataGenerator(spark, name="df2_gen", rows=row_count, partitions=200)
     .withIdOutput()
+    .withColumn("skewed_id", "string", values=skew_values_2, weights=skew_weights_2)
     .withColumn("category", "string", values=["A", "B", "C", "D", "E"], random=True)
-    .withColumn("value1", "float", minValue=0, maxValue=1000, random=True)
-    .withColumn("value2", "float", minValue=0, maxValue=100, random=True)
-    .withColumn("value3", "float", minValue=0, maxValue=1000, random=True)
-    .withColumn("value4", "float", minValue=0, maxValue=100, random=True)
-    .withColumn("value5", "float", minValue=0, maxValue=1000, random=True)
-    .withColumn("value6", "float", minValue=0, maxValue=100, random=True)
-    .withColumn("value7", "float", minValue=0, maxValue=1000, random=True)
-    .withColumn("value8", "float", minValue=0, maxValue=100, random=True)
+    .withColumn("value1", "double", minValue=0, maxValue=1000, random=True)
+    .withColumn("value2", "double", minValue=0, maxValue=100, random=True)
+    .withColumn("value3", "double", minValue=0, maxValue=1000, random=True)
+    .withColumn("value4", "double", minValue=0, maxValue=100, random=True)
+    .withColumn("value5", "double", minValue=0, maxValue=1000, random=True)
+    .withColumn("value6", "double", minValue=0, maxValue=100, random=True)
+    .withColumn("value7", "double", minValue=0, maxValue=1000, random=True)
+    .withColumn("value8", "double", minValue=0, maxValue=100, random=True)
     .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00", interval="1 day", random=True)
 )
 
@@ -102,19 +116,19 @@ if not table_exists:
     print(f"Creating table {writeIcebergTableOne} for the first time.")
 
     # Create df1 with skewed key
-    df1_spec = (DataGenerator(spark, name="df1_gen", rows=row_count, partitions=20)
+    df1_spec = (DataGenerator(spark, name="df1_gen", rows=row_count, partitions=200)
         .withIdOutput()
-        .withColumn("skewed_id", "string", values=skew_key_distribution)
+        .withColumn("skewed_id", "string", values=skew_values_1, weights=skew_weights_1)
         .withColumn("category", "string", values=["A", "B", "C", "D", "E"], random=True)
-        .withColumn("value1", "float", minValue=0, maxValue=1000, random=True)
-        .withColumn("value2", "float", minValue=0, maxValue=100, random=True)
-        .withColumn("value3", "float", minValue=0, maxValue=1000, random=True)
-        .withColumn("value4", "float", minValue=0, maxValue=100, random=True)
-        .withColumn("value5", "float", minValue=0, maxValue=1000, random=True)
-        .withColumn("value6", "float", minValue=0, maxValue=100, random=True)
-        .withColumn("value7", "float", minValue=0, maxValue=1000, random=True)
-        .withColumn("value8", "float", minValue=0, maxValue=100, random=True)
-        .withColumn("event_ts", "timestamp", begin="2023-01-01 01:00:00", interval="1 day", random=True)
+        .withColumn("value1", "double", minValue=0, maxValue=1000, random=True)
+        .withColumn("value2", "double", minValue=0, maxValue=100, random=True)
+        .withColumn("value3", "double", minValue=0, maxValue=1000, random=True)
+        .withColumn("value4", "double", minValue=0, maxValue=100, random=True)
+        .withColumn("value5", "double", minValue=0, maxValue=1000, random=True)
+        .withColumn("value6", "double", minValue=0, maxValue=100, random=True)
+        .withColumn("value7", "double", minValue=0, maxValue=1000, random=True)
+        .withColumn("value8", "double", minValue=0, maxValue=100, random=True)
+        .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00", interval="1 day", random=True)
     )
 
     df1 = df1_spec.build()
