@@ -90,7 +90,7 @@ df2_spec = (DataGenerator(spark, name="df2_gen", rows=row_count, partitions=20)
     .withColumn("value6", "float", minValue=0, maxValue=100, random=True)
     .withColumn("value7", "float", minValue=0, maxValue=1000, random=True)
     .withColumn("value8", "float", minValue=0, maxValue=100, random=True)
-    .withColumn("event_ts", "timestamp", begin="2020-01-01", interval="1 day", random=True)
+    .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00", interval="1 day", random=True)
 )
 
 df2 = df2_spec.build()
@@ -114,7 +114,7 @@ if not table_exists:
         .withColumn("value6", "float", minValue=0, maxValue=100, random=True)
         .withColumn("value7", "float", minValue=0, maxValue=1000, random=True)
         .withColumn("value8", "float", minValue=0, maxValue=100, random=True)
-        .withColumn("event_ts", "timestamp", begin="2020-01-01", interval="1 day", random=True)
+        .withColumn("event_ts", "timestamp", begin="2023-01-01 01:00:00", interval="1 day", random=True)
     )
 
     df1 = df1_spec.build()
