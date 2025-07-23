@@ -330,8 +330,8 @@ cde job create \
   --executor-memory "8g" \
   --driver-cores 4 \
   --driver-memory "4g"
-  --arg spark_catalog.default.dynamic_incremental_target_table \
-  --arg spark_catalog.default.dynamic_incremental_source_table \
+  --arg spark_catalog.default.dynamic_incremental_target_table_large \
+  --arg spark_catalog.default.dynamic_incremental_source_table_large \
   --conf spark.dynamicAllocation.minExecutors=1 \
   --conf spark.dynamicAllocation.maxExecutors=20 \
   --conf spark.sql.adaptive.enabled=False \
