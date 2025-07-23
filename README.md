@@ -305,6 +305,8 @@ cde job run --name iceberg_merge_caching \
 This will only run in CDE.
 
 ```
+cde resource create --name spark_observability_hol
+
 cde resource create \
   --name numpy \
   --type python-env
