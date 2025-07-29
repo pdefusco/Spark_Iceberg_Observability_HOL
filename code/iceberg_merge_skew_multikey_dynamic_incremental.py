@@ -62,14 +62,14 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 # 2. Generate row count from normal distribution
-row_count = int(np.random.normal(loc=5_000_000, scale=1_000_000))  # 5M for safe testing
-row_count = max(row_count, 1_000_000)  # Ensure a reasonable floor
+row_count = int(np.random.normal(loc=500_000_000, scale=50_000_000))  # 5M for safe testing
+row_count = max(row_count, 10_000_000)  # Ensure a reasonable floor
 
 print(f"Generating {row_count:,} rows")
 
 # Dynamically choose skewed keys and probabilities for DF1
 num_skew_keys_1 = random.randint(5, 10)
-skew_keys_1 = random.sample(range(10_000, 1_000_000), num_skew_keys_1)
+skew_keys_1 = random.sample(range(10_000_000, 5_000_000_000), num_skew_keys_1)
 skew_probs_1 = np.random.dirichlet(np.ones(num_skew_keys_1), size=1)[0]
 skew_values_1 = [str(k) for k in skew_keys_1]
 skew_weights_1 = [float(p) for p in skew_probs_1]
@@ -80,7 +80,7 @@ skew_weights_1 = [float(p) for p in skew_probs_1]
 
 # Dynamically choose skewed keys and probabilities for DF1
 num_skew_keys_2 = random.randint(5, 10)
-skew_keys_2 = random.sample(range(10_000, 1_000_000), num_skew_keys_2)
+skew_keys_2 = random.sample(range(10_000_000, 5_000_000_000), num_skew_keys_2)
 skew_probs_2 = np.random.dirichlet(np.ones(num_skew_keys_2), size=1)[0]
 skew_values_2 = [str(k) for k in skew_keys_2]
 skew_weights_2 = [float(p) for p in skew_probs_2]
