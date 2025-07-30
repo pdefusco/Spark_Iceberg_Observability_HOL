@@ -326,15 +326,15 @@ cde job delete \
 cde job create \
   --name iceberg_merge_dynamic_incremental \
   --type spark \
-  --application-file iceberg_merge_skew_multikey_dynamic_incremental.py \
+  --application-file iceberg_merge_skew_multikey_dynamic_incremental_random_overlap.py \
   --python-env-resource-name numpy \
   --mount-1-resource spark_observability_hol \
   --executor-cores 4 \
   --executor-memory "8g" \
   --driver-cores 4 \
   --driver-memory "4g" \
-  --arg spark_catalog.default.dynamic_incremental_target_table_large \
-  --arg spark_catalog.default.dynamic_incremental_source_table_large \
+  --arg spark_catalog.default.dynamic_incremental_target_table_large_overlap \
+  --arg spark_catalog.default.dynamic_incremental_source_table_large_overlap \
   --conf spark.dynamicAllocation.minExecutors=1 \
   --conf spark.dynamicAllocation.maxExecutors=20 \
   --conf spark.sql.adaptive.enabled=False \
@@ -342,6 +342,9 @@ cde job create \
 ```
 
 ```
+cde job delete \
+  --name dynamic-incremental-orch
+
 cde resource upload \
   --name spark_observability_hol \
   --local-path code/airflow_orch.py
