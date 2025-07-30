@@ -318,7 +318,7 @@ cde resource upload \
 
 cde resource upload \
   --name spark_observability_hol \
-  --local-path code/iceberg_merge_skew_multikey_dynamic_incremental_random_overlap.py.py
+  --local-path code/iceberg_merge_skew_multikey_dynamic_incremental_random_overlap.py
 
 cde job delete \
   --name iceberg_merge_dynamic_incremental
