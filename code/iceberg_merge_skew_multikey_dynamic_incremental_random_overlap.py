@@ -38,11 +38,11 @@
 #***************************************************************************/
 
 from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, when, rand, floor
 import datetime
 import sys
-import numpy as np
 import random
-
+import numpy as np
 from dbldatagen import DataGenerator
 
 print("PYTHON EXECUTABLE:", sys.executable)
@@ -58,7 +58,7 @@ print(writeIcebergTableTwo)
 
 # 1. Start Spark session
 spark = SparkSession.builder \
-    .appName("MultiKeySkewDynamic") \
+    .appName("MultiKeySkewDynamicOptimized") \
     .getOrCreate()
 
 # 2. Generate row count from normal distribution
@@ -67,7 +67,7 @@ row_count = max(row_count, 10_000_000)
 
 print(f"Generating {row_count:,} rows")
 
-# 3. Create dynamic skew keys for two dataframes
+# 3. Create dynamic skew keys
 def create_skew_keys():
     num_keys = random.randint(5, 10)
     keys = random.sample(range(10_000_000, 5_000_000_000), num_keys)
@@ -77,31 +77,26 @@ def create_skew_keys():
 skew_values_1, skew_weights_1 = create_skew_keys()
 skew_values_2, skew_weights_2 = create_skew_keys()
 
-base_ts = datetime.datetime(2020, 1, 1)
-
-# 4. Create df2 ids with partial overlap and mostly new ids
-# Random overlap between 10% and 90%
+# 4. ID overlap
 overlap_fraction = random.uniform(0.1, 0.9)
-overlap_count = int(row_count * overlap_fraction)
-new_id_count = row_count - overlap_count
+print(f"ID Overlap with existing table: {overlap_fraction:.2%}")
 
-print(f"ID Overlap with existing table: {overlap_fraction:.2%} ({overlap_count:,} overlapping, {new_id_count:,} new)")
+# Use Spark to generate IDs
+id_df = spark.range(row_count).withColumn("rand_val", rand())
 
-# For overlapping IDs, reuse from existing range
-existing_ids = np.random.randint(0, 10_000_000_000, size=overlap_count)
+id_df = id_df.withColumn(
+    "id",
+    when(
+        col("rand_val") < overlap_fraction,
+        (floor(rand() * 10_000_000_000)).cast("long")
+    ).otherwise(
+        (10_000_000_000 + floor(rand() * 10_000_000_000)).cast("long")
+    )
+).select("id")
 
-# For new IDs, ensure high offset to avoid collisions
-new_ids = np.random.randint(10_000_000_000, 20_000_000_000, size=new_id_count)
-
-# Combine and shuffle
-combined_ids = np.concatenate([existing_ids, new_ids])
-np.random.shuffle(combined_ids)
-
-from pyspark.sql.types import LongType
-id_df = spark.createDataFrame([(int(i),) for i in combined_ids], ["id"])
-
-# 5. Create df2 (the source table) with random skew and assigned ids
-df2_spec = (DataGenerator(spark, name="df2_gen", rows=row_count, partitions=200)
+# 5. Build df2 with skew + generated IDs
+df2_spec = (
+    DataGenerator(spark, name="df2_gen", rows=row_count, partitions=200)
     .withColumn("skewed_id", "string", values=skew_values_2, weights=skew_weights_2)
     .withColumn("category", "string", values=["A", "B", "C", "D", "E"], random=True)
     .withColumn("value1", "double", minValue=0, maxValue=1000, random=True)
@@ -118,13 +113,14 @@ df2_spec = (DataGenerator(spark, name="df2_gen", rows=row_count, partitions=200)
 df2_temp = df2_spec.build().drop("id")
 df2 = id_df.withColumn("id", id_df["id"].cast("long")).join(df2_temp)
 
-# 6. Check if target table exists
+# 6. Check for target table existence
 table_exists = spark._jsparkSession.catalog().tableExists(writeIcebergTableOne)
 
 if not table_exists:
     print(f"Creating table {writeIcebergTableOne} for the first time.")
 
-    df1_spec = (DataGenerator(spark, name="df1_gen", rows=row_count, partitions=200)
+    df1_spec = (
+        DataGenerator(spark, name="df1_gen", rows=row_count, partitions=200)
         .withIdOutput()
         .withColumn("skewed_id", "string", values=skew_values_1, weights=skew_weights_1)
         .withColumn("category", "string", values=["A", "B", "C", "D", "E"], random=True)
@@ -144,11 +140,11 @@ if not table_exists:
 else:
     print(f"Table {writeIcebergTableOne} already exists. Skipping creation.")
 
-# 7. Write df2 as staging table
+# 7. Write staging table (df2)
 spark.sql(f"DROP TABLE IF EXISTS {writeIcebergTableTwo} PURGE")
 df2.writeTo(writeIcebergTableTwo).using("iceberg").create()
 
-# 8. Merge into target table with upsert logic
+# 8. Merge upsert
 spark.sql(f"""
     MERGE INTO {writeIcebergTableOne} AS target
     USING {writeIcebergTableTwo} AS source
