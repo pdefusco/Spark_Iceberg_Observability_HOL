@@ -38,66 +38,52 @@
 #***************************************************************************/
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, when, rand, floor
-import datetime
+from pyspark.sql.functions import expr
 import sys
 import random
 import numpy as np
 from dbldatagen import DataGenerator
 
-print("PYTHON EXECUTABLE:", sys.executable)
-print("sys.path:", sys.path)
-print("Numpy version:", np.__version__)
-
+# Setup
 writeIcebergTableOne = sys.argv[1]
 writeIcebergTableTwo = sys.argv[2]
 
-print("Write Tables:")
-print(writeIcebergTableOne)
-print(writeIcebergTableTwo)
-
-# 1. Start Spark session
 spark = SparkSession.builder \
-    .appName("MultiKeySkewDynamicOptimized") \
+    .appName("MultiKeySkew_Ids_As_SkewKeys") \
     .getOrCreate()
 
-# 2. Generate row count from normal distribution
+# Fixed row count for dev/testing
 row_count = int(np.random.normal(loc=500_000_000, scale=50_000_000))
-row_count = max(row_count, 10_000_000)
-
+row_count = max(row_count, 10_000_000)  # Ensure minimum size
 print(f"Generating {row_count:,} rows")
 
-# 3. Create dynamic skew keys
-def create_skew_keys():
-    num_keys = random.randint(5, 10)
-    keys = random.sample(range(10_000_000, 5_000_000_000), num_keys)
-    probs = np.random.dirichlet(np.ones(num_keys), size=1)[0]
-    return [str(k) for k in keys], [float(p) for p in probs]
+# Skew and overlap config
+def create_skew_ids(num_keys=10):
+    ids = random.sample(range(10_000_000, 5_000_000_000), num_keys)
+    weights = np.random.dirichlet(np.ones(num_keys), size=1)[0]
+    return ids, weights
 
-skew_values_1, skew_weights_1 = create_skew_keys()
-skew_values_2, skew_weights_2 = create_skew_keys()
+# Generate skewed id set
+skewed_ids, skew_weights = create_skew_ids(num_keys=10)
 
-# 4. ID overlap
+# Choose overlap fraction
 overlap_fraction = random.uniform(0.1, 0.9)
-print(f"ID Overlap with existing table: {overlap_fraction:.2%}")
+overlap_count = int(len(skewed_ids) * overlap_fraction)
+overlap_ids = skewed_ids[:overlap_count]
+new_ids = [i + 10_000_000_000 for i in skewed_ids[overlap_count:]]
+df2_ids = overlap_ids + new_ids
+df2_weights = np.random.dirichlet(np.ones(len(df2_ids)), size=1)[0]
 
-# Use Spark to generate IDs
-id_df = spark.range(row_count).withColumn("rand_val", rand())
+print(f"Overlap fraction: {overlap_fraction:.2%}")
+print(f"df1 will use {len(skewed_ids)} skewed IDs")
+print(f"df2 will reuse {len(overlap_ids)} (overlapping) and {len(new_ids)} (new) IDs")
 
-id_df = id_df.withColumn(
-    "id",
-    when(
-        col("rand_val") < overlap_fraction,
-        (floor(rand() * 10_000_000_000)).cast("long")
-    ).otherwise(
-        (10_000_000_000 + floor(rand() * 10_000_000_000)).cast("long")
-    )
-).select("id")
+num_partitions = max(row_count // 1_000_000, 4)
 
-# 5. Build df2 with skew + generated IDs
+# ---- Create df2 ----
 df2_spec = (
-    DataGenerator(spark, name="df2_gen", rows=row_count, partitions=200)
-    .withColumn("skewed_id", "string", values=skew_values_2, weights=skew_weights_2)
+    DataGenerator(spark, name="df2_gen", rows=row_count, partitions=num_partitions, seedColumnName="_seed_id")
+    .withColumn("id", "long", values=df2_ids, weights=df2_weights)
     .withColumn("category", "string", values=["A", "B", "C", "D", "E"], random=True)
     .withColumn("value1", "double", minValue=0, maxValue=1000, random=True)
     .withColumn("value2", "double", minValue=0, maxValue=100, random=True)
@@ -110,19 +96,17 @@ df2_spec = (
     .withColumn("event_ts", "timestamp", begin="2020-01-01 01:00:00", interval="1 day", random=True)
 )
 
-df2_temp = df2_spec.build().drop("id")
-df2 = id_df.withColumn("id", id_df["id"].cast("long")).join(df2_temp)
-
-# 6. Check for target table existence
+df2 = df2_spec.build()
+df2 = df2.drop("_seed_id")
+# ---- Create df1 (only if table doesn't exist) ----
 table_exists = spark._jsparkSession.catalog().tableExists(writeIcebergTableOne)
 
 if not table_exists:
-    print(f"Creating table {writeIcebergTableOne} for the first time.")
+    print(f"Creating target table {writeIcebergTableOne}")
 
     df1_spec = (
-        DataGenerator(spark, name="df1_gen", rows=row_count, partitions=200)
-        .withIdOutput()
-        .withColumn("skewed_id", "string", values=skew_values_1, weights=skew_weights_1)
+        DataGenerator(spark, name="df1_gen", rows=row_count, partitions=num_partitions, seedColumnName="_seed_id")
+        .withColumn("id", "long", values=skewed_ids, weights=skew_weights)
         .withColumn("category", "string", values=["A", "B", "C", "D", "E"], random=True)
         .withColumn("value1", "double", minValue=0, maxValue=1000, random=True)
         .withColumn("value2", "double", minValue=0, maxValue=100, random=True)
@@ -136,15 +120,15 @@ if not table_exists:
     )
 
     df1 = df1_spec.build()
+    df1 = df1.drop("_seed_id")
     df1.writeTo(writeIcebergTableOne).using("iceberg").create()
 else:
-    print(f"Table {writeIcebergTableOne} already exists. Skipping creation.")
+    print(f"Target table {writeIcebergTableOne} exists. Skipping creation.")
 
-# 7. Write staging table (df2)
+# ---- Write staging table and merge ----
 spark.sql(f"DROP TABLE IF EXISTS {writeIcebergTableTwo} PURGE")
 df2.writeTo(writeIcebergTableTwo).using("iceberg").create()
 
-# 8. Merge upsert
 spark.sql(f"""
     MERGE INTO {writeIcebergTableOne} AS target
     USING {writeIcebergTableTwo} AS source
