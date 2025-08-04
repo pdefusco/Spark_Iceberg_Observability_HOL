@@ -99,9 +99,37 @@ spark_job_4 = CDEJobRunOperator(
         trigger_rule='all_success',
         )
 
+spark_job_5 = CDEJobRunOperator(
+        task_id='iceberg-incremental-load-5',
+        dag=dag,
+        job_name='iceberg_merge_dynamic_incremental', #Must match name of CDE Spark Job in the CDE Jobs UI
+        trigger_rule='all_success',
+        )
+
+spark_job_6 = CDEJobRunOperator(
+        task_id='iceberg-incremental-load-6',
+        dag=dag,
+        job_name='iceberg_merge_dynamic_incremental', #Must match name of CDE Spark Job in the CDE Jobs UI
+        trigger_rule='all_success',
+        )
+
+spark_job_7 = CDEJobRunOperator(
+        task_id='iceberg-incremental-load-7',
+        dag=dag,
+        job_name='iceberg_merge_dynamic_incremental', #Must match name of CDE Spark Job in the CDE Jobs UI
+        trigger_rule='all_success',
+        )
+
+spark_job_8 = CDEJobRunOperator(
+        task_id='iceberg-incremental-load-8',
+        dag=dag,
+        job_name='iceberg_merge_dynamic_incremental', #Must match name of CDE Spark Job in the CDE Jobs UI
+        trigger_rule='all_success',
+        )
+
 end = DummyOperator(
         task_id="end",
         dag=dag
 )
 
-start >> spark_job_1 >> spark_job_2 >> spark_job_3 >> spark_job_4 >> end
+start >> spark_job_1 >> spark_job_2 >> spark_job_3 >> spark_job_4 >> spark_job_5 >> spark_job_6 >> spark_job_7 >> spark_job_8 >> end

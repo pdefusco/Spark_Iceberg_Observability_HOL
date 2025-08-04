@@ -45,15 +45,15 @@ import numpy as np
 from dbldatagen import DataGenerator
 
 # Setup
-writeIcebergTableOne = sys.argv[1]
-writeIcebergTableTwo = sys.argv[2]
+targetTable = sys.argv[1]
+sourceTable = sys.argv[2]
 
 spark = SparkSession.builder \
-    .appName("MultiKeySkew_Ids_As_SkewKeys") \
+    .appName("DynamicMultiKeySkew") \
     .getOrCreate()
 
 # Fixed row count for dev/testing
-row_count = int(np.random.normal(loc=500_000_000, scale=50_000_000))
+row_count = int(np.random.normal(loc=50_000_000, scale=50_000_000))
 row_count = max(row_count, 10_000_000)  # Ensure minimum size
 print(f"Generating {row_count:,} rows")
 
@@ -99,10 +99,10 @@ df2_spec = (
 df2 = df2_spec.build()
 df2 = df2.drop("_seed_id")
 # ---- Create df1 (only if table doesn't exist) ----
-table_exists = spark._jsparkSession.catalog().tableExists(writeIcebergTableOne)
+table_exists = spark._jsparkSession.catalog().tableExists(targetTable)
 
 if not table_exists:
-    print(f"Creating target table {writeIcebergTableOne}")
+    print(f"Creating target table {targetTable}")
 
     df1_spec = (
         DataGenerator(spark, name="df1_gen", rows=row_count, partitions=num_partitions, seedColumnName="_seed_id")
@@ -121,17 +121,17 @@ if not table_exists:
 
     df1 = df1_spec.build()
     df1 = df1.drop("_seed_id")
-    df1.writeTo(writeIcebergTableOne).using("iceberg").create()
+    df1.writeTo(targetTable).using("iceberg").create()
 else:
-    print(f"Target table {writeIcebergTableOne} exists. Skipping creation.")
+    print(f"Target table {targetTable} exists. Skipping creation.")
 
 # ---- Write staging table and merge ----
-spark.sql(f"DROP TABLE IF EXISTS {writeIcebergTableTwo} PURGE")
-df2.writeTo(writeIcebergTableTwo).using("iceberg").create()
+spark.sql(f"DROP TABLE IF EXISTS {sourceTable} PURGE")
+df2.writeTo(sourceTable).using("iceberg").create()
 
 spark.sql(f"""
-    MERGE INTO {writeIcebergTableOne} AS target
-    USING {writeIcebergTableTwo} AS source
+    MERGE INTO {targetTable} AS target
+    USING {sourceTable} AS source
     ON target.id = source.id
     WHEN MATCHED AND source.event_ts > target.event_ts THEN
       UPDATE SET *
@@ -140,4 +140,9 @@ spark.sql(f"""
 """)
 
 print("Iceberg MERGE INTO operation completed.")
+
+#print("Compute Iceberg Table Statistics.")
+#spark.sql(f"CALL spark_catalog.system.compute_table_stats('{targetTable}')")
+#print("Iceberg Table Statistics Computed.")
+
 spark.stop()
