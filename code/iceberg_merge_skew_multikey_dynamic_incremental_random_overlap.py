@@ -43,17 +43,17 @@ import sys
 import random
 import numpy as np
 from dbldatagen import DataGenerator
-import datetime
+from datetime import date
 
 # Setup
 targetTable = sys.argv[1]
 sourceTable = sys.argv[2]
 
-# Get the current date and time
-current_datetime = datetime.datetime.now()
+# Get the current date
+today = date.today()
 
 spark = SparkSession.builder \
-    .appName(f"IcebergDynamicMultiKeySkew_{current_datetime}") \
+    .appName(f"IcebergDynamicMultiKeySkew_{today}") \
     .getOrCreate()
 
 # Fixed row count for dev/testing
